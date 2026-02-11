@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para mi personita favorita ❤️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #fff5f5;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+        .romantic-font {
+            font-family: 'Dancing Script', cursive;
+        }
+        .heart {
+            position: absolute;
+            color: #ff4d4d;
+            animation: float 6s linear infinite;
+            opacity: 0;
+            z-index: 0;
+        }
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+        
+        .envelope-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform: scale(0.85);
+        }
+        @media (min-width: 640px) {
+            .envelope-container { transform: scale(1); }
+        }
+
+        .envelope-wrapper {
+            position: relative;
+            width: 320px;
+            height: 200px;
+            background: #ff8fa3;
+            border-radius: 0 0 15px 15px;
+            cursor: pointer;
+        }
+        
+        .envelope-front-cover {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            background: #ffb3c1;
+            clip-path: polygon(0 0, 0 100%, 100% 100%, 100% 0, 50% 50%);
+            border-radius: 0 0 15px 15px;
+        }
+
+        .flap {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: #ff758f;
+            clip-path: polygon(0 0, 100% 0, 50% 55%);
+            z-index: 15;
+            transform-origin: top;
+            transition: transform 0.6s ease;
+        }
+
+        .letter {
+            position: absolute;
+            bottom: 5px;
+            left: 10px;
+            width: 300px;
+            height: 150px;
+            background: white;
+            z-index: 3;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.05);
+            font-weight: bold;
+            color: #ff4d4d;
+            padding: 20px;
+            text-align: center;
+            opacity: 0; 
+        }
+
+        .open-flap .flap {
+            transform: rotateX(180deg);
+            z-index: 2; 
+        }
+        .open-flap .letter {
+            opacity: 1;
+            transform: translateY(-50px);
+        }
+        .grabbed-letter .letter {
+            transform: translateY(-180px);
+            height: 240px;
+            z-index: 10;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .btn-transition {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+            pointer-events: none;
+        }
+
+        /* Ajuste de prioridad visual para que el SI no tape al NO */
+        .centered-yes {
+            position: absolute !important;
+            left: 50% !important;
+            top: 50% !important;
+            margin: 0 !important;
+            z-index: 30 !important; /* Menor que el botón NO */
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #db2777;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <audio id="romantic-music" loop>
+        <source src="https://www.chosic.com/wp-content/uploads/2021/04/And-So-It-Begins-Inspired-By-Crush-Music.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="hearts-container" class="fixed inset-0 pointer-events-none"></div>
+
+    <!-- Sección 1: Introducción -->
+    <section class="min-h-screen flex flex-col items-center justify-center p-4 md:p-6 text-center relative z-10">
+        <div class="w-full max-w-3xl bg-white/95 backdrop-blur-sm p-6 md:p-10 rounded-3xl shadow-2xl border border-pink-100">
+            <h1 class="romantic-font text-4xl md:text-7xl text-pink-600 mb-4 md:mb-6">Hola mi vida...</h1>
+            <p class="text-lg md:text-2xl leading-relaxed mb-4 md:mb-6">
+                Solo quería decirte lo mucho que <span class="text-pink-600 font-bold">te amo</span>. 
+            </p>
+            <p class="text-lg md:text-2xl leading-relaxed mb-6 md:mb-8">
+                Me la paso increíble cada día junto a ti. Me encanta cuando estamos <span class="text-pink-600 font-bold">cerquita</span> disfrutando el tiempo, pero también cuando nos toca estar a la <span class="text-pink-600 font-bold">distancia</span> y nos quedamos hablando por mensajes o llamadas. Eres mi todo y me haces muy, muy feliz.
+            </p>
+            <div class="animate-bounce mt-6 md:mt-10">
+                <p class="text-pink-400 font-bold mb-2">Baja un poquito...</p>
+                <svg class="w-6 h-6 md:w-8 md:h-8 mx-auto text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                </svg>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sección 2: El Sobre -->
+    <section id="envelope-section" class="min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
+        <h2 class="romantic-font text-3xl md:text-4xl text-pink-600 mb-10 md:mb-12 text-center">Tengo algo para ti...</h2>
+        <div class="envelope-container">
+            <div class="envelope-wrapper" id="envelope-wrapper">
+                <div class="flap"></div>
+                <div class="envelope-front-cover"></div>
+                <div id="target-letter" class="letter">
+                    <div class="text-center">
+                        <p id="letter-text" class="text-xl">¡Ábreme! ❤️</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p id="helper-text" class="mt-8 text-pink-400 font-medium animate-pulse text-center">Toca el sobre para abrirlo</p>
+    </section>
+
+    <!-- Sección 3: La Pregunta -->
+    <section id="question-section" class="hidden min-h-screen flex flex-col items-center justify-center p-4 text-center relative z-10 opacity-0 transition-opacity duration-1000">
+        <div id="main-card" class="w-full max-w-4xl min-h-[550px] md:min-h-[650px] bg-white p-6 md:p-12 rounded-3xl shadow-2xl border-2 border-pink-200 flex flex-col items-center justify-center relative overflow-hidden">
+            
+            <div id="content-asking" class="w-full flex flex-col items-center h-full relative">
+                <div class="text-5xl md:text-7xl mb-4 md:mb-6">🧸🌷✨</div>
+                <h2 class="romantic-font text-4xl md:text-7xl text-pink-600 mb-10 md:mb-16 px-2 md:px-4">¿Quieres ser mi San Valentín?</h2>
+                
+                <div id="button-area" class="relative w-full h-80 md:h-96 flex flex-row items-center justify-center gap-6 md:gap-12">
+                    <!-- Botón SI con z-index menor para no tapar -->
+                    <button id="btn-yes" class="btn-transition bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-8 md:py-4 md:px-10 rounded-full shadow-lg text-xl md:text-2xl z-30 whitespace-nowrap">
+                        Sí
+                    </button>
+                    <!-- Botón NO con z-index mayor para estar siempre arriba -->
+                    <button id="btn-no" class="btn-transition bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-8 rounded-full shadow-md text-lg md:text-xl z-50">
+                        No
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contenido Éxito -->
+            <div id="content-success" class="hidden flex-col items-center justify-center text-center w-full py-6 md:py-10">
+                <div class="text-6xl md:text-8xl mb-4 md:mb-6">🥳💕🥰</div>
+                <h2 id="success-title" class="romantic-font text-5xl md:text-6xl text-pink-600 mb-4 md:mb-6 font-bold">¡Siiii!</h2>
+                <p id="success-message" class="text-xl md:text-3xl text-gray-700 max-w-lg leading-relaxed mb-8 md:mb-12 px-4"></p>
+                
+                <div class="animate-bounce">
+                    <p class="text-pink-400 font-bold mb-2">Baja un poquito...</p>
+                    <svg class="w-6 h-6 md:w-8 md:h-8 mx-auto text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sección 4: Zona Mágica Gemini -->
+    <section id="magic-zone-section" class="hidden min-h-screen flex flex-col items-center justify-center p-4 md:p-6 relative z-10 bg-white/50 backdrop-blur-sm">
+        <div class="w-full max-w-3xl bg-white rounded-3xl p-6 md:p-12 shadow-2xl border-t-4 border-pink-400">
+            <h3 class="romantic-font text-4xl md:text-5xl text-pink-500 mb-8 md:mb-10 text-center">Nuestra Zona Mágica ✨</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                <!-- Dedicatoria -->
+                <div class="bg-pink-50 p-5 md:p-6 rounded-2xl shadow-sm border border-pink-100 flex flex-col">
+                    <p class="text-gray-600 mb-4 font-medium text-sm md:text-base">Palabras para ti, amor de mi vida...</p>
+                    <button id="btn-generate-dedication" class="w-full bg-pink-400 hover:bg-pink-500 text-white py-3 rounded-xl font-bold transition-all transform active:scale-95 shadow-md text-sm md:text-base">
+                        <span id="btn-dedication-text">Generar algo lindo ✨</span>
+                    </button>
+                    <div id="ai-response-dedication" class="mt-6 text-pink-700 italic text-base md:text-lg text-center hidden leading-relaxed"></div>
+                </div>
+
+                <!-- Citas -->
+                <div class="bg-indigo-50 p-5 md:p-6 rounded-2xl shadow-sm border border-indigo-100 flex flex-col">
+                    <p class="text-gray-600 mb-4 font-medium text-sm md:text-base">¿Qué hacemos hoy?</p>
+                    <button id="btn-suggest-date" class="w-full bg-indigo-400 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold transition-all transform active:scale-95 shadow-md text-sm md:text-base">
+                        <span id="btn-date-text">Sugerir una cita ✨</span>
+                    </button>
+                    <div id="ai-response-date" class="mt-6 text-indigo-700 text-base md:text-lg text-center hidden leading-relaxed"></div>
+                </div>
+            </div>
+            
+            <p class="text-center text-pink-300 mt-10 md:mt-12 romantic-font text-xl md:text-2xl">Hecho con amor para Eri ❤️</p>
+        </div>
+    </section>
+
+    <script>
+        const apiKey = ""; 
+        
+        async function callGemini(prompt, type) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const systemInstructions = {
+                dedication: "Eres el novio de Erika Ponce (le dices Eri o Erika). Eres tierno, casual y divertido. Escribe una dedicatoria muy corta (máximo 2-3 frases) de apoyo, cariño o amor. No seas exagerado ni muy formal. No uses negritas estilo Markdown como asteriscos. Solo texto plano tierno.",
+                date: "Sugiere un plan de cita romántica y muy sencillo para hacer en casa para Eri. Ejemplos: ver una peli con snacks, pintar, jugar videojuegos, cocinar. Solo sugiere un plan por respuesta. No uses negritas estilo Markdown como asteriscos."
+            };
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemInstructions[type] }] }
+            };
+            let delay = 1000;
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error('API Error');
+                    const data = await response.json();
+                    let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Te amo demasiado, Eri.";
+                    return rawText.replace(/\*\*(.*?)\*\*/g, '$1');
+                } catch (error) {
+                    if (i === 4) return "Perdí las palabras por un segundo, pero mi amor por ti sigue igual. ❤️";
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        function createHeart() {
+            const container = document.getElementById('hearts-container');
+            const heart = document.createElement('div');
+            heart.innerHTML = '❤️';
+            heart.className = 'heart';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.fontSize = (Math.random() * 20 + 10) + 'px';
+            heart.style.animationDuration = (Math.random() * 3 + 3) + 's';
+            container.appendChild(heart);
+            setTimeout(() => heart.remove(), 6000);
+        }
+        setInterval(createHeart, 300);
+
+        const envelopeWrapper = document.getElementById('envelope-wrapper');
+        const letterText = document.getElementById('letter-text');
+        const helperText = document.getElementById('helper-text');
+        const envelopeSection = document.getElementById('envelope-section');
+        const questionSection = document.getElementById('question-section');
+        const magicZoneSection = document.getElementById('magic-zone-section');
+        const audio = document.getElementById('romantic-music');
+
+        let envelopeStep = 0; 
+        envelopeWrapper.addEventListener('click', () => {
+            if (envelopeStep === 0) {
+                audio.play().catch(() => {});
+                envelopeWrapper.classList.add('open-flap');
+                letterText.innerText = "¡Agárrame! ❤️";
+                helperText.innerText = "Toca la carta para sacarla";
+                envelopeStep = 1;
+            } else if (envelopeStep === 1) {
+                envelopeWrapper.classList.add('grabbed-letter');
+                envelopeStep = 2;
+                setTimeout(() => {
+                    envelopeSection.classList.add('fade-out');
+                    setTimeout(() => {
+                        envelopeSection.classList.add('hidden');
+                        questionSection.classList.remove('hidden');
+                        setTimeout(() => questionSection.classList.add('opacity-100'), 50);
+                    }, 500);
+                }, 1200);
+            }
+        });
+
+        const btnNo = document.getElementById('btn-no');
+        const btnYes = document.getElementById('btn-yes');
+        const contentAsking = document.getElementById('content-asking');
+        const contentSuccess = document.getElementById('content-success');
+        const successTitle = document.getElementById('success-title');
+        const successMessage = document.getElementById('success-message');
+        const buttonArea = document.getElementById('button-area');
+
+        let noCount = 0;
+        let escapeInCurrentTurn = 0;
+        const maxEscapesPerTurn = 4;
+        
+        const noMessages = [
+            "No lo hagas",
+            "Por aquí no",
+            "Ignora este botón",
+            "Este no sirve",
+            "¡No me toques!",
+            "Piénsalo mejor",
+            "Mala idea...",
+            "Soy invisible",
+            "¡Qué terca!",
+            "¡Error 404!"
+        ];
+        
+        const yesShortMessages = [
+            "¡Dale aquí!",
+            "¡Presiona Sí!",
+            "¡Aquí es!",
+            "¡Sí, acepto!",
+            "¡Dime que sí!",
+            "¡Este botón!",
+            "¡Hazlo por mí!",
+            "¡Haz clic aquí!",
+            "¡Sí, te amo!",
+            "¡Solo Sí!"
+        ];
+
+        function checkOverlap() {
+            const rectYes = btnYes.getBoundingClientRect();
+            const rectNo = btnNo.getBoundingClientRect();
+            const padding = 15; 
+            return !(rectNo.right + padding < rectYes.left || rectNo.left - padding > rectYes.right || rectNo.bottom + padding < rectYes.top || rectNo.top - padding > rectYes.bottom);
+        }
+
+        function moveButton() {
+            const areaRect = buttonArea.getBoundingClientRect();
+            const noRect = btnNo.getBoundingClientRect();
+            
+            if (noCount >= 4) {
+                btnYes.classList.add('centered-yes');
+                btnNo.style.position = 'absolute';
+                btnNo.style.transition = "all 0.2s ease-out";
+                btnNo.style.zIndex = "100"; // Asegurar que el NO esté muy arriba
+            }
+            
+            let foundPosition = false;
+            let attempts = 0;
+            while (!foundPosition && attempts < 50) {
+                const maxX = areaRect.width - noRect.width;
+                const maxY = areaRect.height - noRect.height;
+                const newLeft = Math.random() * maxX;
+                const newTop = Math.random() * maxY;
+                
+                btnNo.style.left = `${newLeft}px`;
+                btnNo.style.top = `${newTop}px`;
+                btnNo.style.margin = "0";
+                
+                if (!checkOverlap()) foundPosition = true;
+                attempts++;
+            }
+        }
+
+        function handleNoSelection(e) {
+            if (noCount >= 4 && escapeInCurrentTurn < maxEscapesPerTurn) {
+                if (e) e.preventDefault();
+                moveButton(); 
+                escapeInCurrentTurn++; 
+                return true; 
+            }
+            return false; 
+        }
+
+        btnNo.addEventListener('click', (e) => {
+            if (handleNoSelection(null)) return;
+
+            noCount++;
+            escapeInCurrentTurn = 0;
+            if (noCount <= 10) {
+                btnNo.innerText = noMessages[(noCount - 1) % noMessages.length];
+                btnYes.innerText = yesShortMessages[(noCount - 1) % yesShortMessages.length];
+                
+                const yesScale = Math.min(1 + (noCount * 0.22), 2.2);
+                
+                if (noCount >= 4) { 
+                    btnYes.style.transform = `translate(-50%, -50%) scale(${yesScale})`; 
+                } else { 
+                    btnYes.style.transform = `scale(${yesScale})`; 
+                }
+                
+                const noScale = Math.max(0.5, 1 - noCount*0.06);
+                btnNo.style.transform = `scale(${noScale})`;
+                
+                if (noCount >= 4) moveButton();
+            } else { forceSuccess(); }
+        });
+
+        btnNo.addEventListener('touchstart', (e) => { 
+            handleNoSelection(e);
+        });
+
+        btnNo.addEventListener('mouseover', () => { 
+            if (window.innerWidth > 768) {
+                handleNoSelection(null);
+            }
+        });
+
+        function forceSuccess() {
+            showSuccessUI("¡Ya eres mía!", "Te voy a obligar de todas formas porque te amo demasiado para aceptar un no por respuesta. 😍");
+        }
+        btnYes.addEventListener('click', () => {
+            if (noCount === 0) { showSuccessUI("¡Siiii!", "Sabía que aceptarías a la primera. ¡Me haces el más feliz del mundo! ❤️"); }
+            else { showSuccessUI("¡Qué bueno que aceptaste!", "Te costó un poquito decidirte, pero qué bueno que ya eres mi San Valentín oficial. ¡Ya no te escapas! ❤️"); }
+        });
+
+        function showSuccessUI(title, msg) {
+            contentAsking.classList.add('hidden');
+            contentSuccess.classList.remove('hidden');
+            contentSuccess.style.display = 'flex';
+            successTitle.innerText = title;
+            successMessage.innerText = msg;
+            magicZoneSection.classList.remove('hidden');
+            launchConfetti();
+        }
+
+        const btnDedication = document.getElementById('btn-generate-dedication');
+        const btnSuggestDate = document.getElementById('btn-suggest-date');
+        const aiResponseDedication = document.getElementById('ai-response-dedication');
+        const aiResponseDate = document.getElementById('ai-response-date');
+
+        btnDedication.addEventListener('click', async () => {
+            btnDedication.disabled = true;
+            btnDedication.innerHTML = '<span class="loader"></span> Generando...';
+            aiResponseDedication.classList.add('hidden');
+            const response = await callGemini("Genera una frase de apoyo y amor para Eri.", "dedication");
+            aiResponseDedication.innerText = response;
+            aiResponseDedication.classList.remove('hidden');
+            btnDedication.disabled = false;
+            btnDedication.innerHTML = 'Generar algo lindo ✨';
+        });
+
+        btnSuggestDate.addEventListener('click', async () => {
+            btnSuggestDate.disabled = true;
+            btnSuggestDate.innerHTML = '<span class="loader"></span> Pensando...';
+            aiResponseDate.classList.add('hidden');
+            const response = await callGemini("Dime una idea de cita sencilla para hacer en casa.", "date");
+            aiResponseDate.innerText = response;
+            aiResponseDate.classList.remove('hidden');
+            btnSuggestDate.disabled = false;
+            btnSuggestDate.innerHTML = 'Sugerir una cita ✨';
+        });
+
+        function launchConfetti() {
+            const duration = 10 * 1000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 40, spread: 360, ticks: 60, zIndex: 100 };
+            function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+            const interval = setInterval(function() {
+              const timeLeft = animationEnd - Date.now();
+              if (timeLeft <= 0) return clearInterval(interval);
+              const particleCount = 70 * (timeLeft / duration);
+              confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+              const particleCount2 = 70 * (timeLeft / duration);
+              confetti(Object.assign({}, defaults, { particleCount: particleCount2, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
+
+        window.addEventListener('resize', () => {
+            if (noCount >= 4) moveButton();
+        });
+    </script>
+</body>
+</html>
