@@ -183,13 +183,13 @@
 
     <!-- Sección 3: La Pregunta -->
     <section id="question-section" class="hidden min-h-screen flex flex-col items-center justify-center p-4 text-center relative z-10 opacity-0 transition-opacity duration-1000">
-        <div id="main-card" class="w-full max-w-4xl min-h-[450px] bg-white p-5 md:p-10 rounded-3xl shadow-2xl border-2 border-pink-200 flex flex-col items-center justify-center relative overflow-hidden">
+        <div id="main-card" class="w-full max-w-3xl min-h-[450px] bg-white p-5 md:p-10 rounded-3xl shadow-2xl border-2 border-pink-200 flex flex-col items-center justify-center relative overflow-hidden">
             <div id="content-asking" class="w-full flex flex-col items-center h-full relative">
                 <div class="text-5xl mb-4">🧸🌷✨</div>
                 <h2 class="romantic-font text-3xl md:text-5xl text-pink-600 mb-8 md:mb-12 px-2">¿Quieres ser mi San Valentín?</h2>
-                <div id="button-area" class="relative w-full h-48 md:h-64 flex items-center justify-center gap-16 md:gap-24">
+                <div id="button-area" class="relative w-full h-48 md:h-64 flex items-center justify-center gap-24 md:gap-32">
                     <button id="btn-yes" class="btn-transition bg-pink-500 text-white font-bold py-2 px-8 md:py-3 md:px-10 rounded-full shadow-lg text-lg md:text-xl z-30 whitespace-nowrap">Sí</button>
-                    <button id="btn-no" class="btn-transition bg-gray-200 text-gray-700 font-bold py-2 px-8 md:py-3 md:px-10 rounded-full shadow-md text-base md:text-lg z-50">No</button>
+                    <button id="btn-no" class="btn-transition bg-gray-200 text-gray-700 font-bold py-2 px-8 md:py-3 md:px-8 rounded-full shadow-md text-base md:text-lg z-50">No</button>
                 </div>
             </div>
             <div id="content-success" class="hidden flex-col items-center justify-center text-center w-full">
@@ -208,18 +208,20 @@
 
     <!-- Sección 4: Zona Mágica -->
     <section id="magic-zone-section" class="hidden min-h-screen flex flex-col items-center justify-center p-4 relative z-10 bg-white/30 backdrop-blur-sm">
-        <div class="w-full max-w-3xl bg-white rounded-3xl p-6 md:p-10 shadow-2xl border-t-4 border-pink-400">
+        <div class="w-full max-w-4xl bg-white rounded-3xl p-6 md:p-10 shadow-2xl border-t-4 border-pink-400">
             <h3 class="romantic-font text-3xl md:text-4xl text-pink-500 mb-6 md:mb-8 text-center">Nuestra Zona Mágica ✨</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                <div class="bg-pink-50 p-4 rounded-2xl shadow-sm border border-pink-100 flex flex-col items-center">
+                <!-- Dedicatoria -->
+                <div class="bg-pink-50 p-4 rounded-2xl shadow-sm border border-pink-100 flex flex-col items-center min-h-[180px] justify-between">
                     <p class="text-gray-600 mb-3 font-medium text-xs md:text-sm text-center">Palabras para ti, amor de mi vida...</p>
                     <button id="btn-generate-dedication" class="w-full bg-pink-400 text-white py-2 rounded-xl font-bold transition-all text-xs md:text-sm shadow-md">Generar algo lindo ✨</button>
-                    <div id="ai-response-dedication" class="mt-4 text-pink-700 italic text-sm md:text-base text-center hidden leading-relaxed"></div>
+                    <div id="ai-response-dedication" class="mt-4 text-pink-700 italic text-sm md:text-base text-center hidden leading-relaxed font-medium"></div>
                 </div>
-                <div class="bg-indigo-50 p-4 rounded-2xl shadow-sm border border-indigo-100 flex flex-col items-center">
+                <!-- Citas -->
+                <div class="bg-indigo-50 p-4 rounded-2xl shadow-sm border border-indigo-100 flex flex-col items-center min-h-[180px] justify-between">
                     <p class="text-gray-600 mb-3 font-medium text-xs md:text-sm text-center">¿Qué hacemos hoy?</p>
                     <button id="btn-suggest-date" class="w-full bg-indigo-400 text-white py-2 rounded-xl font-bold transition-all text-xs md:text-sm shadow-md">Sugerir una cita ✨</button>
-                    <div id="ai-response-date" class="mt-4 text-indigo-700 text-sm md:text-base text-center hidden leading-relaxed"></div>
+                    <div id="ai-response-date" class="mt-4 text-indigo-700 text-sm md:text-base text-center hidden leading-relaxed font-medium"></div>
                 </div>
             </div>
             <p class="text-center text-pink-300 mt-8 romantic-font text-lg md:text-xl">Hecho con amor para Eri ❤️</p>
@@ -252,13 +254,30 @@
             window.addEventListener(evt, playMusic, { once: false });
         });
 
-        // --- Lógica de IA mejorada ---
+        // --- Listas de frases de respaldo (30-60 palabras cada una) ---
+        const backupDedications = [
+            "Eres la persona que ilumina mis días más oscuros, Eri. Tu sonrisa es mi refugio y tu apoyo constante me da la fuerza necesaria para enfrentar cualquier desafío diario. No importa lo que pase, siempre estaré a tu lado celebrando tus éxitos y abrazándote en tus momentos difíciles. Eres mi todo hoy y siempre.",
+            "Mi amor por ti, Erika, crece con cada pequeño detalle, desde nuestras risas compartidas hasta los silencios cómodos de la tarde. Eres una mujer increíble, llena de luz y valentía, y me siento el hombre más afortunado del mundo por caminar de tu mano. Gracias por ser mi confidente y mi compañera de vida perfecta.",
+            "Eri, quiero que sepas que eres mi lugar favorito en el mundo entero sin ninguna duda. Tu amor me transforma y me inspira a ser una mejor versión de mí mismo cada día que pasa. Eres valiente, inteligente y hermosa por dentro y por fuera; nunca dudes de lo mucho que vales para mí.",
+            "En los días en que te sientas cansada, recuerda siempre que aquí tienes mi hombro para apoyarte y descansar. Eres mi motivación diaria, Erika Ponce, y ver cómo persigues tus sueños con tanta pasión me llena de un orgullo inmenso. No hay nada que no podamos superar juntos con este amor infinito.",
+            "A veces me detengo a pensar en lo increíble que es haberte encontrado en este camino de la vida. Tu presencia llena cada rincón de mi corazón de una alegría que no puedo explicar con simples palabras. Gracias por ser la razón de mis sonrisas más sinceras y por amarme de la forma en que lo haces."
+        ];
+
+        const backupDates = [
+            "¿Qué tal si hoy preparamos una cena temática italiana deliciosa en la cocina de casa? Podemos poner música suave, cocinar una pasta casera desde cero con mucho amor, descorchar un vino y terminar la noche bailando lentamente en la sala. Es un plan sencillo, pero lleno de magia y romance solo para nosotros dos.",
+            "Podríamos organizar una noche de cine retro muy acogedora en la sala de estar. Preparamos una montaña gigante de palomitas de maíz, compramos algunos dulces, apagamos todas las luces y nos acurrucamos bajo una manta caliente para ver esas películas clásicas que tanto nos gustan. Lo mejor de todo será simplemente estar abrazados disfrutando.",
+            "Mi plan ideal para hoy es que saquemos nuestras pinturas y un par de lienzos para crear arte. No importa si no somos expertos, la idea es crear algo juntos mientras escuchamos nuestra playlist favorita. Es una forma hermosa de conectar, reírnos de nuestros dibujos locos y dejar fluir nuestra gran creatividad compartida.",
+            "Sugiero una noche de videojuegos competitiva pero muy cariñosa para divertirnos. Podemos preparar unos snacks rápidos, elegir ese juego que tanto nos divierte y pasar horas compitiendo sanamente. Al final, el perdedor tendrá que darle un masaje relajante al ganador, aunque el verdadero premio siempre será pasar tiempo de calidad riendo juntos hoy.",
+            "Podríamos transformar la sala en un picnic nocturno bajo la luz de unas velas. Ponemos mantas en el suelo, preparamos unos sándwiches ricos o picamos algo suave mientras hablamos de todo lo que soñamos para el futuro. Es un momento íntimo para desconectarnos del mundo exterior y centrarnos únicamente en el amor que nos tenemos."
+        ];
+
+        // --- Lógica de IA Refinada ---
         async function callGemini(prompt, type) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             
             const sysInstr = {
-                dedication: "Eres el novio de Erika Ponce (Eri). Escribe mensajes de amor, apoyo emocional y admiración. No seas corto ni simple. Sé tierno, casual y profundo. Usa frases como 'Estoy orgulloso de ti', 'Eres mi lugar favorito', 'Gracias por existir'. Máximo 3 frases cortas. Sin negritas ni asteriscos.",
-                date: "Sugiere planes divertidos y acogedores para hacer EN CASA con Erika (Eri). Ejemplos: Noche de spa casero, competencia de Mario Kart con snacks, pintar un lienzo juntos, cocinar una pizza desde cero o una noche de karaoke en la sala. Sé creativo y dulce. Máximo 2 frases. Sin negritas ni asteriscos."
+                dedication: "Eres el novio de Eri Ponce. Escribe un mensaje de amor o apoyo de longitud media (aprox 40-50 palabras). Sé dulce, casual y profundo. Habla de lo orgulloso que estás de ella. No uses negritas ni asteriscos.",
+                date: "Sugiere un plan específico detallado para hacer EN CASA con Eri (películas, juegos, cocina, arte). Entre 40 y 50 palabras. Sé divertido y dulce. No menciones dinero. No uses negritas ni asteriscos."
             };
 
             const payload = {
@@ -267,11 +286,30 @@
             };
 
             try {
-                const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000); 
+
+                const response = await fetch(url, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
                 const data = await response.json();
-                let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Te amo mucho, Eri.";
-                return text.replace(/\*\*/g, '');
-            } catch (error) { return "Mi corazón se quedó sin palabras, pero te amo igual. ❤️"; }
+                let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (!text || text.length < 10) throw new Error("Fallback required");
+                return text.replace(/\*\*/g, '').trim();
+                
+            } catch (error) { 
+                // Usar frases de respaldo largas y variadas
+                if (type === 'dedication') {
+                    return backupDedications[Math.floor(Math.random() * backupDedications.length)];
+                }
+                return backupDates[Math.floor(Math.random() * backupDates.length)];
+            }
         }
 
         function createHeart() {
@@ -336,8 +374,7 @@
         function checkOverlap() {
             const rectYes = btnYes.getBoundingClientRect();
             const rectNo = btnNo.getBoundingClientRect();
-            const pad = 15;
-            return !(rectNo.right + pad < rectYes.left || rectNo.left - pad > rectYes.right || rectNo.bottom + pad < rectYes.top || rectNo.top - pad > rectYes.bottom);
+            return !(rectNo.right + 10 < rectYes.left || rectNo.left - 10 > rectYes.right || rectNo.bottom + 10 < rectYes.top || rectNo.top - 10 > rectYes.bottom);
         }
 
         function moveButton() {
@@ -408,23 +445,32 @@
             launchConfetti();
         }
 
-        // --- Disparadores de Zona Mágica con Prompts específicos ---
         document.getElementById('btn-generate-dedication').addEventListener('click', async function() {
             this.disabled = true;
             this.innerHTML = '<span class="loader"></span>';
-            const res = await callGemini("Eri, quiero recordarte cuánto te amo y lo orgulloso que estoy de ti. Dime algo que me haga sentir amada y apoyada.", "dedication");
             const box = document.getElementById('ai-response-dedication');
-            box.innerText = res; box.classList.remove('hidden');
-            this.disabled = false; this.innerHTML = 'Generar algo lindo ✨';
+            box.classList.add('hidden');
+            
+            const res = await callGemini("Eri, quiero recordarte cuánto te amo y lo orgulloso que estoy de ti. Dime algo que me haga sentir amada y apoyada.", "dedication");
+            
+            box.innerText = res; 
+            box.classList.remove('hidden');
+            this.disabled = false; 
+            this.innerHTML = 'Generar algo lindo ✨';
         });
 
         document.getElementById('btn-suggest-date').addEventListener('click', async function() {
             this.disabled = true;
             this.innerHTML = '<span class="loader"></span>';
-            const res = await callGemini("Dame una idea creativa y divertida para una cita sencilla hoy mismo en nuestra casa con Erika.", "date");
             const box = document.getElementById('ai-response-date');
-            box.innerText = res; box.classList.remove('hidden');
-            this.disabled = false; this.innerHTML = 'Sugerir una cita ✨';
+            box.classList.add('hidden');
+            
+            const res = await callGemini("Dame una idea creativa y detallada para una cita sencilla hoy mismo en nuestra casa con Erika.", "date");
+            
+            box.innerText = res; 
+            box.classList.remove('hidden');
+            this.disabled = false; 
+            this.innerHTML = 'Sugerir una cita ✨';
         });
 
         function launchConfetti() {
