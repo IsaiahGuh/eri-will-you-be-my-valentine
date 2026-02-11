@@ -138,7 +138,7 @@
 </head>
 <body class="text-gray-800">
 
-    <!-- Audio configurado para sonar desde el inicio con volumen alto (50%) -->
+    <!-- Música de fondo -->
     <audio id="romantic-music" loop preload="auto">
         <source src="soundtrack.mp3" type="audio/mpeg">
     </audio>
@@ -147,7 +147,7 @@
 
     <!-- Sección 1: Introducción -->
     <section class="min-h-screen flex flex-col items-center justify-center p-4 text-center relative z-10">
-        <div class="w-full max-w-2xl bg-white/95 backdrop-blur-sm p-6 md:p-10 rounded-3xl shadow-xl border border-pink-100">
+        <div class="w-full max-w-3xl bg-white/95 backdrop-blur-sm p-6 md:p-10 rounded-3xl shadow-xl border border-pink-100">
             <h1 class="romantic-font text-4xl md:text-6xl text-pink-600 mb-4">Hola mi vida...</h1>
             <p class="text-base md:text-xl leading-relaxed mb-4">
                 Solo quería decirte lo mucho que <span class="text-pink-600 font-bold">te amo</span>. 
@@ -183,29 +183,21 @@
 
     <!-- Sección 3: La Pregunta -->
     <section id="question-section" class="hidden min-h-screen flex flex-col items-center justify-center p-4 text-center relative z-10 opacity-0 transition-opacity duration-1000">
-        <div id="main-card" class="w-full max-w-3xl min-h-[450px] bg-white p-5 md:p-10 rounded-3xl shadow-2xl border-2 border-pink-200 flex flex-col items-center justify-center relative overflow-hidden">
-            
+        <div id="main-card" class="w-full max-w-4xl min-h-[450px] bg-white p-5 md:p-10 rounded-3xl shadow-2xl border-2 border-pink-200 flex flex-col items-center justify-center relative overflow-hidden">
             <div id="content-asking" class="w-full flex flex-col items-center h-full relative">
                 <div class="text-5xl mb-4">🧸🌷✨</div>
                 <h2 class="romantic-font text-3xl md:text-5xl text-pink-600 mb-8 md:mb-12 px-2">¿Quieres ser mi San Valentín?</h2>
                 
-                <!-- Contenedor de botones simétrico -->
-                <div id="button-area" class="relative w-full h-48 md:h-64 flex items-center justify-center gap-4">
-                    <button id="btn-yes" class="btn-transition bg-pink-500 text-white font-bold py-2 px-6 md:py-3 md:px-8 rounded-full shadow-lg text-lg md:text-xl z-30 whitespace-nowrap">
-                        Sí
-                    </button>
-                    <button id="btn-no" class="btn-transition bg-gray-200 text-gray-700 font-bold py-2 px-6 md:py-3 md:px-8 rounded-full shadow-md text-base md:text-lg z-50">
-                        No
-                    </button>
+                <!-- Ajuste de separación inicial -->
+                <div id="button-area" class="relative w-full h-48 md:h-64 flex items-center justify-center gap-16 md:gap-24">
+                    <button id="btn-yes" class="btn-transition bg-pink-500 text-white font-bold py-2 px-6 md:py-3 md:px-8 rounded-full shadow-lg text-lg md:text-xl z-30 whitespace-nowrap">Sí</button>
+                    <button id="btn-no" class="btn-transition bg-gray-200 text-gray-700 font-bold py-2 px-6 md:py-3 md:px-8 rounded-full shadow-md text-base md:text-lg z-50">No</button>
                 </div>
             </div>
-
-            <!-- Contenido Éxito -->
             <div id="content-success" class="hidden flex-col items-center justify-center text-center w-full">
                 <div class="text-5xl md:text-7xl mb-4">🥳💕🥰</div>
                 <h2 id="success-title" class="romantic-font text-4xl md:text-5xl text-pink-600 mb-4 font-bold">¡Siiii!</h2>
                 <p id="success-message" class="text-lg md:text-2xl text-gray-700 max-w-lg leading-relaxed mb-6 px-2"></p>
-                
                 <div class="animate-bounce">
                     <p class="text-pink-400 font-bold mb-1 text-sm">Baja un poquito...</p>
                     <svg class="w-5 h-5 mx-auto text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -216,38 +208,32 @@
         </div>
     </section>
 
-    <!-- Sección 4: Zona Mágica Gemini -->
+    <!-- Sección 4: Zona Mágica -->
     <section id="magic-zone-section" class="hidden min-h-screen flex flex-col items-center justify-center p-4 relative z-10 bg-white/30 backdrop-blur-sm">
         <div class="w-full max-w-2xl bg-white rounded-3xl p-6 md:p-10 shadow-2xl border-t-4 border-pink-400">
             <h3 class="romantic-font text-3xl md:text-4xl text-pink-500 mb-6 md:mb-8 text-center">Nuestra Zona Mágica ✨</h3>
-            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div class="bg-pink-50 p-4 rounded-2xl shadow-sm border border-pink-100 flex flex-col items-center">
                     <p class="text-gray-600 mb-3 font-medium text-xs md:text-sm text-center">Palabras para ti, amor de mi vida...</p>
-                    <button id="btn-generate-dedication" class="w-full bg-pink-400 text-white py-2 rounded-xl font-bold transition-all text-xs md:text-sm shadow-md">
-                        <span id="btn-dedication-text">Generar algo lindo ✨</span>
-                    </button>
+                    <button id="btn-generate-dedication" class="w-full bg-pink-400 text-white py-2 rounded-xl font-bold transition-all text-xs md:text-sm shadow-md">Generar algo lindo ✨</button>
                     <div id="ai-response-dedication" class="mt-4 text-pink-700 italic text-sm md:text-base text-center hidden leading-relaxed"></div>
                 </div>
-
                 <div class="bg-indigo-50 p-4 rounded-2xl shadow-sm border border-indigo-100 flex flex-col items-center">
                     <p class="text-gray-600 mb-3 font-medium text-xs md:text-sm text-center">¿Qué hacemos hoy?</p>
-                    <button id="btn-suggest-date" class="w-full bg-indigo-400 text-white py-2 rounded-xl font-bold transition-all text-xs md:text-sm shadow-md">
-                        <span id="btn-date-text">Sugerir una cita ✨</span>
-                    </button>
+                    <button id="btn-suggest-date" class="w-full bg-indigo-400 text-white py-2 rounded-xl font-bold transition-all text-xs md:text-sm shadow-md">Sugerir una cita ✨</button>
                     <div id="ai-response-date" class="mt-4 text-indigo-700 text-sm md:text-base text-center hidden leading-relaxed"></div>
                 </div>
             </div>
-            
             <p class="text-center text-pink-300 mt-8 romantic-font text-lg md:text-xl">Hecho con amor para Eri ❤️</p>
         </div>
     </section>
 
     <script>
-        const apiKey = ""; 
+        const apiKey = "AIzaSyDrwdtqd2vKXBrROIWQO49ZynmGTaYShD4"; 
         const audio = document.getElementById('romantic-music');
         let musicStarted = false;
         
+        // --- Mejorar Inicio de Música ---
         function playMusic() {
             if (musicStarted) return;
             musicStarted = true;
@@ -259,37 +245,36 @@
                     if (vol < targetVol) {
                         vol += 0.02;
                         audio.volume = Math.min(vol, targetVol);
-                    } else {
-                        clearInterval(fadeIn);
-                    }
+                    } else { clearInterval(fadeIn); }
                 }, 100);
-            }).catch(e => {
-                musicStarted = false; 
-            });
+            }).catch(e => { musicStarted = false; });
         }
 
-        ['click', 'touchstart', 'scroll', 'keydown'].forEach(evt => {
+        // Detectores de interacción más amplios para el sonido
+        ['click', 'touchstart', 'scroll', 'keydown', 'mousemove'].forEach(evt => {
             window.addEventListener(evt, playMusic, { once: true });
         });
 
+        // --- Gemini API corrigiendo respuestas separadas ---
         async function callGemini(prompt, type) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
             const systemInstructions = {
-                dedication: "Eres el novio de Erika Ponce (le dices Eri o Erika). Eres tierno, casual y divertido. Escribe una dedicatoria muy corta (máximo 2 frases) de apoyo, cariño o amor. No uses negritas ni asteriscos. Solo texto plano.",
-                date: "Sugiere un plan de cita muy sencillo para hacer en casa para Eri. Ejemplos: ver peli, pintar, cocinar algo fácil. Solo sugiere una idea corta. No uses negritas ni asteriscos."
+                dedication: "Eres el novio de Erika Ponce (le dices Eri). Escribe una dedicatoria romántica de máximo 2 frases, muy tierno y casual. Sin negritas.",
+                date: "Sugiere un plan de cita creativo y sencillo para hacer en casa con Erika (Eri). Máximo 2 frases. Sin negritas."
             };
+
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }],
                 systemInstruction: { parts: [{ text: systemInstructions[type] }] }
             };
+
             try {
                 const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 const data = await response.json();
-                let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Te amo demasiado, Eri.";
+                let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Te amo mucho, Eri.";
                 return rawText.replace(/\*\*/g, '');
-            } catch (error) {
-                return "Te amo muchísimo. ❤️";
-            }
+            } catch (error) { return "Te amo muchísimo. ❤️"; }
         }
 
         function createHeart() {
@@ -318,7 +303,7 @@
             if (envelopeStep === 0) {
                 envelopeWrapper.classList.add('open-flap');
                 letterText.innerText = "¡Agárrame! ❤️";
-                helperText.innerText = "Toca la carta para sacarla";
+                helperText.innerText = "Toca la carta";
                 envelopeStep = 1;
             } else if (envelopeStep === 1) {
                 envelopeWrapper.classList.add('grabbed-letter');
@@ -345,71 +330,41 @@
         let noCount = 0;
         let escapeInCurrentTurn = 0;
         const maxEscapesPerTurn = 4;
-        
-        // Frases de rechazo que tienen sentido negativo
-        const noMessages = [
-            "No, no quiero",
-            "No, te odio",
-            "No, me caes mal",
-            "No, ni lo sueñes",
-            "No, aléjate",
-            "No, busca a otra",
-            "No, qué pesado",
-            "No, me aburres",
-            "No, vete ya",
-            "No, imposible"
-        ];
-        
-        // Frases de aceptación que tienen sentido positivo
-        const yesMessages = [
-            "Sí, porfavor",
-            "Sí, si quiero",
-            "Sí, acepto",
-            "Sí, obvio",
-            "Sí, te amo",
-            "Sí, mil veces",
-            "Sí, claro",
-            "Sí, ya dale",
-            "Sí, por siempre",
-            "Sí, soy tuya"
-        ];
 
-        function isMobile() { return window.innerWidth < 768; }
+        const noMessages = ["no, no quiero", "no, te odio", "no, me caes mal", "no, ni lo sueñes", "no, aléjate", "no, busca a otra", "no, qué pesado", "no, me aburres", "no, vete ya", "no, imposible"];
+        const yesMessages = ["sí, porfavor", "sí, si quiero", "sí, acepto", "sí, obvio", "sí, te amo", "sí, mil veces", "sí, claro", "sí, ya dale", "sí, por siempre", "sí, soy tuya"];
+
+        // --- Lógica de Detección PC/Móvil ---
+        const isTouchDevice = () => ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
         function checkOverlap() {
             const rectYes = btnYes.getBoundingClientRect();
             const rectNo = btnNo.getBoundingClientRect();
-            const padding = 10; 
-            return !(rectNo.right + padding < rectYes.left || rectNo.left - padding > rectYes.right || rectNo.bottom + padding < rectYes.top || rectNo.top - padding > rectYes.bottom);
+            return !(rectNo.right + 10 < rectYes.left || rectNo.left - 10 > rectYes.right || rectNo.bottom + 10 < rectYes.top || rectNo.top - 10 > rectYes.bottom);
         }
 
         function moveButton() {
             const areaRect = buttonArea.getBoundingClientRect();
             const noRect = btnNo.getBoundingClientRect();
-            
             if (noCount >= 4) {
                 btnYes.classList.add('centered-yes');
                 btnNo.style.position = 'absolute';
                 btnNo.style.zIndex = "100";
             }
-            
             let foundPosition = false;
             let attempts = 0;
             while (!foundPosition && attempts < 40) {
-                const maxX = areaRect.width - noRect.width;
-                const maxY = areaRect.height - noRect.height;
-                const newLeft = Math.random() * maxX;
-                const newTop = Math.random() * maxY;
-                
+                const newLeft = Math.random() * (areaRect.width - noRect.width);
+                const newTop = Math.random() * (areaRect.height - noRect.height);
                 btnNo.style.left = `${newLeft}px`;
                 btnNo.style.top = `${newTop}px`;
                 btnNo.style.margin = "0";
-                
                 if (!checkOverlap()) foundPosition = true;
                 attempts++;
             }
         }
 
+        // --- Manejo del Escape diferenciado ---
         function handleNoSelection(e) {
             if (noCount >= 4 && escapeInCurrentTurn < maxEscapesPerTurn) {
                 if (e) e.preventDefault();
@@ -421,29 +376,38 @@
         }
 
         btnNo.addEventListener('click', (e) => {
-            if (handleNoSelection(null)) return;
+            if (handleNoSelection(e)) return;
+
             noCount++;
             escapeInCurrentTurn = 0;
             if (noCount <= 10) {
                 btnNo.innerText = noMessages[(noCount-1) % noMessages.length];
                 btnYes.innerText = yesMessages[(noCount-1) % yesMessages.length];
-                
-                const factor = isMobile() ? 0.12 : 0.20;
-                const maxScale = isMobile() ? 1.5 : 2.0;
-                const yesScale = Math.min(1 + (noCount * factor), maxScale);
-                
+                const factor = window.innerWidth < 768 ? 0.12 : 0.20;
+                const yesScale = Math.min(1 + (noCount * factor), 1.8);
                 if (noCount >= 4) { 
                     btnYes.style.transform = `translate(-50%, -50%) scale(${yesScale})`; 
                 } else { 
                     btnYes.style.transform = `scale(${yesScale})`; 
                 }
-                
                 btnNo.style.transform = `scale(${Math.max(0.7, 1 - noCount*0.04)})`;
                 if (noCount >= 4) moveButton();
             } else { forceSuccess(); }
         });
 
-        btnNo.addEventListener('touchstart', (e) => { handleNoSelection(e); }, {passive: false});
+        // Solo PC: Escapa al pasar el mouse
+        btnNo.addEventListener('mouseover', () => {
+            if (!isTouchDevice()) {
+                handleNoSelection(null);
+            }
+        });
+
+        // Celular: Escape al tocar
+        btnNo.addEventListener('touchstart', (e) => {
+            if (isTouchDevice()) {
+                handleNoSelection(e);
+            }
+        }, {passive: false});
 
         function forceSuccess() {
             showSuccessUI("¡Ya eres mía!", "Te voy a obligar porque te amo demasiado para aceptar un no. 😍");
@@ -463,10 +427,11 @@
             launchConfetti();
         }
 
+        // --- Zona Mágica: Funciones Separadas ---
         document.getElementById('btn-generate-dedication').addEventListener('click', async function() {
             this.disabled = true;
-            this.innerHTML = '<span class="loader"></span> Generando...';
-            const res = await callGemini("Genera una frase de apoyo y amor para Eri.", "dedication");
+            this.innerHTML = '<span class="loader"></span>';
+            const res = await callGemini("Genera una dedicatoria de apoyo y amor para Erika Ponce.", "dedication");
             const box = document.getElementById('ai-response-dedication');
             box.innerText = res;
             box.classList.remove('hidden');
@@ -476,8 +441,8 @@
 
         document.getElementById('btn-suggest-date').addEventListener('click', async function() {
             this.disabled = true;
-            this.innerHTML = '<span class="loader"></span> Pensando...';
-            const res = await callGemini("Dime una cita sencilla en casa.", "date");
+            this.innerHTML = '<span class="loader"></span>';
+            const res = await callGemini("Dime una idea de cita sencilla en casa para Eri.", "date");
             const box = document.getElementById('ai-response-date');
             box.innerText = res;
             box.classList.remove('hidden');
