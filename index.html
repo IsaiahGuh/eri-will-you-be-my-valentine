@@ -110,7 +110,6 @@
             transition: all 0.2s ease-out;
         }
 
-        /* Ajuste de prioridad visual */
         .centered-yes {
             position: absolute !important;
             left: 50% !important;
@@ -139,8 +138,9 @@
 </head>
 <body class="text-gray-800">
 
+    <!-- Audio cargado desde tu archivo local -->
     <audio id="romantic-music" loop>
-        <source src="https://www.chosic.com/wp-content/uploads/2021/04/And-So-It-Begins-Inspired-By-Crush-Music.mp3" type="audio/mpeg">
+        <source src="soundtrack.mp3" type="audio/mpeg">
     </audio>
 
     <div id="hearts-container" class="fixed inset-0 pointer-events-none"></div>
@@ -189,7 +189,6 @@
                 <div class="text-5xl mb-4">🧸🌷✨</div>
                 <h2 class="romantic-font text-3xl md:text-5xl text-pink-600 mb-8 md:mb-12 px-2">¿Quieres ser mi San Valentín?</h2>
                 
-                <!-- Contenedor de botones simétrico -->
                 <div id="button-area" class="relative w-full h-48 md:h-64 flex items-center justify-center gap-4">
                     <button id="btn-yes" class="btn-transition bg-pink-500 text-white font-bold py-2 px-6 md:py-3 md:px-8 rounded-full shadow-lg text-lg md:text-xl z-30 whitespace-nowrap">
                         Sí
@@ -222,7 +221,6 @@
             <h3 class="romantic-font text-3xl md:text-4xl text-pink-500 mb-6 md:mb-8 text-center">Nuestra Zona Mágica ✨</h3>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                <!-- Dedicatoria -->
                 <div class="bg-pink-50 p-4 rounded-2xl shadow-sm border border-pink-100 flex flex-col items-center">
                     <p class="text-gray-600 mb-3 font-medium text-xs md:text-sm text-center">Palabras para ti, amor de mi vida...</p>
                     <button id="btn-generate-dedication" class="w-full bg-pink-400 text-white py-2 rounded-xl font-bold transition-all text-xs md:text-sm shadow-md">
@@ -231,7 +229,6 @@
                     <div id="ai-response-dedication" class="mt-4 text-pink-700 italic text-sm md:text-base text-center hidden leading-relaxed"></div>
                 </div>
 
-                <!-- Citas -->
                 <div class="bg-indigo-50 p-4 rounded-2xl shadow-sm border border-indigo-100 flex flex-col items-center">
                     <p class="text-gray-600 mb-3 font-medium text-xs md:text-sm text-center">¿Qué hacemos hoy?</p>
                     <button id="btn-suggest-date" class="w-full bg-indigo-400 text-white py-2 rounded-xl font-bold transition-all text-xs md:text-sm shadow-md">
@@ -246,9 +243,27 @@
     </section>
 
     <script>
+        // La clave API se maneja automáticamente en el Canvas, 
+        // pero para Vercel debes configurar la variable de entorno.
         const apiKey = ""; 
         const audio = document.getElementById('romantic-music');
         
+        // Función para reproducir música con fade in suave
+        function playMusic() {
+            audio.volume = 0; // Empieza en silencio
+            audio.play().catch(e => console.log("Autoplay bloqueado hasta interacción"));
+            
+            let vol = 0;
+            const fadeIn = setInterval(() => {
+                if (vol < 0.25) { // Volumen bajito (25%)
+                    vol += 0.01;
+                    audio.volume = vol;
+                } else {
+                    clearInterval(fadeIn);
+                }
+            }, 100);
+        }
+
         async function callGemini(prompt, type) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             const systemInstructions = {
@@ -259,13 +274,15 @@
                 contents: [{ parts: [{ text: prompt }] }],
                 systemInstruction: { parts: [{ text: systemInstructions[type] }] }
             };
+            
             try {
                 const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error();
                 const data = await response.json();
                 let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Te amo demasiado, Eri.";
                 return rawText.replace(/\*\*/g, '');
             } catch (error) {
-                return "Te amo muchísimo. ❤️";
+                return "Te amo muchísimo, Eri. Mi corazón no encuentra palabras pero mis besos sí. ❤️";
             }
         }
 
@@ -292,7 +309,7 @@
         let envelopeStep = 0; 
         envelopeWrapper.addEventListener('click', () => {
             if (envelopeStep === 0) {
-                audio.play().catch(() => {});
+                playMusic(); // Inicia música al abrir el sobre
                 envelopeWrapper.classList.add('open-flap');
                 letterText.innerText = "¡Agárrame! ❤️";
                 helperText.innerText = "Toca la carta";
@@ -342,6 +359,7 @@
             if (noCount >= 4) {
                 btnYes.classList.add('centered-yes');
                 btnNo.style.position = 'absolute';
+                btnNo.style.zIndex = "100";
             }
             
             let foundPosition = false;
@@ -379,9 +397,8 @@
                 btnNo.innerText = noMessages[(noCount-1) % noMessages.length];
                 btnYes.innerText = "Sí, " + yesShortMessages[(noCount-1) % yesShortMessages.length];
                 
-                // Crecimiento controlado: menos agresivo en móvil
-                const factor = isMobile() ? 0.12 : 0.22;
-                const maxScale = isMobile() ? 1.6 : 2.2;
+                const factor = isMobile() ? 0.12 : 0.20;
+                const maxScale = isMobile() ? 1.5 : 2.0;
                 const yesScale = Math.min(1 + (noCount * factor), maxScale);
                 
                 if (noCount >= 4) { 
@@ -445,6 +462,10 @@
             }, 500);
             setTimeout(() => clearInterval(interval), 6000);
         }
+
+        window.addEventListener('resize', () => {
+            if (noCount >= 4) moveButton();
+        });
     </script>
 </body>
 </html>
