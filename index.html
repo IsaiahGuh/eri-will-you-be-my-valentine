@@ -35,10 +35,15 @@
         window.isAuthReady = false;
 
         const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
+            // Regla 3: Auth antes de cualquier consulta
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.error("Auth error:", e);
             }
         };
         initAuth();
@@ -46,6 +51,7 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 window.isAuthReady = true;
+                window.currentUser = user;
                 window.dispatchEvent(new CustomEvent('firebase-ready'));
             }
         });
@@ -103,6 +109,7 @@
         @keyframes floatUpEffect {
             0% { transform: translateY(110vh) rotate(0deg) scale(0.5); opacity: 0; }
             10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
             100% { transform: translateY(-15vh) rotate(360deg) scale(1.4); opacity: 0; }
         }
 
@@ -221,6 +228,7 @@
         </div>
     </nav>
 
+    <!-- BIENVENIDA -->
     <div id="section-welcome" class="min-h-screen flex flex-col items-center justify-center p-4 pt-24 text-center relative z-10">
         <div id="heart-word-cloud" class="relative w-[360px] h-[360px] md:w-[680px] md:h-[680px] mb-8 flex items-center justify-center">
             <h2 id="eri-label" class="romantic-font text-6xl md:text-9xl eri-label-gold opacity-0">Para mi Eri</h2>
@@ -228,6 +236,7 @@
         <p class="romantic-font text-xl md:text-4xl text-pink-400 opacity-90 animate-pulse mt-10">Donde cada palabra cuenta nuestra historia...</p>
     </div>
 
+    <!-- LANDING -->
     <div id="section-landing" class="hidden">
         <section class="min-h-screen flex flex-col items-center justify-center p-4 text-center relative z-10 pt-20">
             <div class="w-full max-w-3xl bg-white/95 backdrop-blur-sm p-10 rounded-3xl shadow-xl border border-pink-100">
@@ -250,6 +259,7 @@
         </section>
     </div>
 
+    <!-- PREGUNTA VALENTINE -->
     <div id="section-question" class="hidden">
         <section class="min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
             <div id="main-card" class="w-full max-w-4xl min-h-[500px] bg-white p-10 rounded-3xl shadow-2xl border-2 border-pink-200 flex flex-col items-center justify-center relative overflow-hidden text-center">
@@ -270,6 +280,7 @@
         </section>
     </div>
 
+    <!-- DIARIO -->
     <div id="section-diary" class="hidden min-h-screen pt-24 pb-32 flex flex-col items-center p-4">
         <h2 class="romantic-font text-5xl text-pink-600 mb-10">Nuestro Diario</h2>
         <div class="w-full max-w-lg bg-white p-8 rounded-3xl shadow-lg border-2 border-pink-100 mb-12">
@@ -320,18 +331,18 @@
         <div class="w-full max-w-5xl bg-white rounded-3xl p-8 md:p-12 shadow-2xl">
             <h3 class="romantic-font text-5xl text-pink-500 mb-14 text-center">Nuestra Zona Mágica ✨</h3>
             <div class="grid md:grid-cols-2 gap-8 mb-20">
-                <div class="bg-pink-50 p-6 rounded-2xl flex flex-col items-center min-h-[250px] justify-between shadow-inner">
+                <div class="bg-pink-50 p-6 rounded-2xl flex flex-col items-center min-h-[250px] justify-between shadow-inner border border-pink-100">
                     <p class="text-gray-500 uppercase text-xs tracking-widest font-bold text-center">Dedicado a ti...</p>
                     <div class="flex gap-2 w-full">
-                        <button id="btn-ai-msg" class="btn-style flex-grow bg-pink-400 text-white text-xs uppercase">Generar ✨</button>
-                        <button id="btn-fav-msg" class="hidden w-14 bg-yellow-400 text-white rounded-full text-xl flex items-center justify-center">⭐</button>
+                        <button id="btn-ai-msg" class="btn-style flex-grow bg-pink-400 text-white text-xs uppercase shadow-lg">Generar ✨</button>
+                        <button id="btn-fav-msg" class="hidden w-14 bg-yellow-400 text-white rounded-full text-xl flex items-center justify-center shadow-md">⭐</button>
                     </div>
-                    <p id="ai-msg-box" class="mt-4 text-pink-700 italic text-center hidden font-semibold text-sm px-2"></p>
+                    <p id="ai-msg-box" class="mt-4 text-pink-700 italic text-center hidden font-semibold text-sm px-2 transition-all duration-500"></p>
                 </div>
-                <div class="bg-indigo-50 p-6 rounded-2xl flex flex-col items-center min-h-[250px] justify-between shadow-inner">
+                <div class="bg-indigo-50 p-6 rounded-2xl flex flex-col items-center min-h-[250px] justify-between shadow-inner border border-indigo-100">
                     <p class="text-gray-500 uppercase text-xs tracking-widest font-bold text-center">¿Qué hacemos hoy?</p>
-                    <button id="btn-ai-date" class="btn-style w-full bg-indigo-400 text-white text-xs uppercase">Sugerir ✨</button>
-                    <p id="ai-date-box" class="mt-4 text-indigo-700 text-center hidden font-semibold text-sm px-2"></p>
+                    <button id="btn-ai-date" class="btn-style w-full bg-indigo-400 text-white text-xs uppercase shadow-lg">Sugerir ✨</button>
+                    <p id="ai-date-box" class="mt-4 text-indigo-700 text-center hidden font-semibold text-sm px-2 transition-all duration-500"></p>
                 </div>
             </div>
             <div class="border-t pt-12">
@@ -357,16 +368,74 @@
         let favorites = [];
         let currentIndex = 0;
         let favRotationIndex = 0;
-
         const signatures = ["- Leandro", "- Leandro Guanoluisa", "- Isaías", "- Isaías Guanoluisa", "- IsaiahGuh", "- Issy", "- El amor de tu vida"];
 
-        // BACKUPS DE RESPALDO (30 + 30)
+        // 30 DEDICATORIAS LARGAS (BACKUP)
         const backupDedications = [
-            "Eres mi sol en días nublados. Gracias por estar conmigo.", "Amo nuestra complicidad única.", "Tu sonrisa es mi lugar favorito.", "Gracias por creer en nosotros siempre.", "Eres mi calma en medio del caos.", "Cada detalle tuyo me enamora.", "Nuestra historia es mi libro preferido.", "Estar a tu lado es un regalo constante.", "Aprecio tu paciencia y tu ternura.", "Confío en ti con todo mi corazón.", "Eres mi mejor decisión.", "Tu amor me hace ser mejor persona.", "Gracias por apoyarme en cada paso.", "Amo nuestros silencios compartidos.", "Eres el hogar al que siempre quiero volver.", "Tu lealtad es mi mayor tesoro.", "Haces que todo sea más bonito.", "Gracias por tu respeto y confianza.", "Eres mi equipo, mi todo.", "Adoro cómo nos miramos.", "Cada beso tuyo es una promesa.", "Eres mi luz y mi paz.", "Te elijo hoy y siempre.", "Gracias por ser mi refugio.", "Amo ver cómo persigues tus sueños.", "Eres mi inspiración diaria.", "Nuestro amor es pura magia.", "Gracias por cuidarme tanto.", "Eres mi estrella del norte.", "Simplemente, te amo."
+            "Desde que llegaste a mi vida, todo tiene un color diferente y más brillante. Eres esa paz que siempre busqué y el apoyo incondicional que me hace sentir que puedo enfrentar cualquier tormenta si estás a mi lado. Gracias por elegirme cada día.",
+            "Me encanta perderme en nuestra complicidad única, donde sobran las palabras porque nuestras miradas lo dicen todo. Eres mi refugio seguro, mi mejor amiga y el amor que siempre soñé tener conmigo para compartir cada pequeño momento de la existencia.",
+            "Tu sonrisa es, sin duda alguna, mi lugar favorito en el mundo entero y la razón por la que siempre busco ser una mejor persona. Aprecio infinitamente tu paciencia, tu ternura y esa forma tan hermosa en la que cuidas de lo nuestro con tanto respeto.",
+            "Gracias por creer en nosotros incluso en esos momentos de duda, tu confianza es el motor que me impulsa a seguir adelante con alegría. No importa qué tan lejos estemos, mi corazón siempre te pertenece porque eres mi hogar y mi mayor orgullo.",
+            "Eres mi calma en medio del caos de este mundo tan loco, la luz que guía mis pasos cuando el camino parece oscurecerse un poco. Valoro cada detalle tuyo, desde los grandes gestos hasta los besos robados que guardo como el tesoro más preciado de mi alma.",
+            "Estar a tu lado es el regalo más grande y constante que la vida me ha dado, y prometo cuidarlo con toda la lealtad y el cariño que mereces. Me haces inmensamente feliz con tu sola presencia y con la seguridad de que caminamos juntos hacia un futuro lleno de sueños.",
+            "Admiro profundamente tu fuerza interior y esa capacidad infinita que tienes para amar y comprender. Nuestra historia es mi libro preferido, uno que deseo escribir contigo eternamente, capítulo tras capítulo, llenándolo de risas, apoyo mutuo y mucha sinceridad.",
+            "Confío en ti con todo mi ser y me siento honrado de compartir mi vida con alguien tan especial, valiente e inteligente como tú. Eres mi equipo, mi compañera de aventuras y el alma que complementa la mía de una forma que las palabras apenas alcanzan a describir.",
+            "Aprecio cada una de nuestras charlas, esas que duran horas y nos hacen olvidar el tiempo, porque en ellas encuentro la esencia de lo que somos. Tu amor me hace sentir invencible y bendecido por tener a la mujer más increíble del universo como mi pareja oficial.",
+            "Simplemente gracias por existir y por ser tú, sin filtros y con toda esa magia que te caracteriza. El mundo es un lugar mucho mejor desde que tú estás en él, repartiendo luz y dándome motivos constantes para agradecerle al destino por habernos cruzado aquel día.",
+            "Tu lealtad es un regalo que cuido celosamente en mi pecho, porque sé que es la base de la inmensa confianza que nos une hoy. Eres mi mayor tesoro y la persona que me motiva a soñar en grande, sabiendo que siempre estarás ahí para celebrar cada pequeño triunfo conmigo.",
+            "Haces que cada día valga la pena simplemente con un mensaje o una llamada, recordándome que no estoy solo en esta aventura llamada vida. Eres mi luz, mi guía y la razón por la que mi corazón late con tanta fuerza y alegría cada vez que pienso en nuestro futuro juntos.",
+            "Te elijo hoy, mañana y siempre, sin dudas ni miedos, porque eres la decisión más fácil y hermosa que he tomado en toda mi existencia. Gracias por ser mi refugio, mi paz y la mujer que llena mis días de una esperanza infinita y un amor que no conoce fronteras.",
+            "Amo la forma en que nos apoyamos mutuamente, creciendo de la mano y respetando cada paso que damos de forma individual y como pareja. Eres mi inspiración diaria, la persona que me enseña a amar de forma pura, leal y con un respeto que es la envidia del mundo.",
+            "Nuestra conexión va mucho más allá de lo físico, es una unión de almas que parece haber sido escrita en las estrellas hace mucho tiempo. Gracias por tu ternura, por tus mimos y por esa forma tan dulce en la que me haces sentir que soy el hombre más afortunado del planeta.",
+            "Valoro cada pequeño detalle que haces por nosotros, desde las notas dulces hasta la forma en que me escuchas cuando más lo necesito. Eres mi mejor amiga, mi confidente y el amor de mi vida, alguien a quien deseo proteger y amar con todas mis fuerzas por siempre.",
+            "La paz que me transmites es invaluable en estos tiempos, eres mi puerto seguro en medio del mar picado y la brisa suave que refresca mi alma. Gracias por ser mi apoyo fundamental, por no soltar mi mano y por demostrarme que el amor verdadero sí existe.",
+            "Me haces mejor persona día tras día, y eso es algo que nunca podré terminar de agradecerte con palabras, solo con acciones y amor eterno. Eres mi sol, mi luna y todo mi universo, la mujer que cambió mi destino para llenarlo de flores, risas y una felicidad indescriptible.",
+            "Cada beso tuyo es una promesa silenciosa que acepto con el alma abierta, sabiendo que estamos construyendo algo sólido, real y muy duradero. Eres mi todo, absolutamente todo, y no hay lugar en el mundo donde prefiera estar que cerquita de ti, compartiendo la vida.",
+            "Gracias por tu respeto y por la confianza inquebrantable que hemos forjado con sinceridad y mucho cariño a lo largo de este tiempo maravilloso. Eres mi estrella del norte, la guía que me mantiene en el camino correcto y la mujer que llena mi pecho de un orgullo inmenso.",
+            "Adoro cómo nos miramos y esa electricidad que aún siento después de tanto tiempo, confirmándome que lo nuestro es magia pura y verdadera pasión. Eres mi luz, mi paz y la compañera perfecta para recorrer cada rincón de este mundo, superando obstáculos y riendo sin parar.",
+            "Tu paciencia conmigo es algo que admiro y valoro cada segundo, demostrándome que el amor también es comprensión y apoyo en los momentos difíciles. Gracias por ser mi refugio, mi fuerza y la persona que me hace sonreír incluso cuando no tengo ganas, eres sencillamente increíble.",
+            "Eres mi equipo favorito, mi socia en los sueños y la persona con la que quiero construir un hogar lleno de amor, respeto y muchísima confianza mutua. Amo ver cómo persigues tus metas con tanta valentía, y prometo estar siempre en primera fila aplaudiendo cada uno de tus éxitos.",
+            "Nuestro amor es el tesoro más grande que poseo, y lo cuidaré con la lealtad de un caballero y la ternura de alguien que sabe que tiene oro en sus manos. Gracias por tu dulzura, por tus abrazos que curan todo y por ser esa esencia vital que me mantiene con una alegría constante.",
+            "Estar contigo es aprender algo nuevo cada día sobre el amor, la entrega y la belleza de compartir la vida con alguien que realmente te valora y te respeta. Eres mi inspiración, mi motivo de risa y la mujer que deseo que sea mi San Valentín por el resto de mis días en esta tierra.",
+            "No hay reto que parezca imposible si cuento con tu apoyo y tus palabras de aliento que me devuelven la fe cuando el mundo se pone un poco gris afuera. Eres mi sol personal, la luz que ilumina mi hogar interno y el amor más leal que jamás haya tenido la fortuna de conocer y abrazar.",
+            "Amo cada rincón de tu ser, tu inteligencia que me cautiva y esa forma tan hermosa que tienes de ver la vida con esperanza y bondad infinita en el corazón. Gracias por elegirme como tu compañero, por darme tu confianza y por permitirme ser parte de tu mundo tan lleno de colores y magia.",
+            "Eres mi estrella del norte en la inmensidad del cielo, la guía constante que me recuerda quién soy y hacia dónde vamos juntos en este viaje tan fascinante. Valoro tu lealtad, tu respeto y la forma en que cuidas de nuestra relación con una dedicación que me enamora más y más cada segundo.",
+            "Simplemente gracias por ser mi paz en los días de tormenta y mi alegría en los días de sol, equilibrando mi vida con tu presencia tan tierna y poderosa a la vez. Te amo con un amor que crece sin límites, fortalecido por la confianza, el apoyo mutuo y esa complicidad que nos hace únicos en el mundo.",
+            "Eres, sin duda, la mejor parte de mi día y la razón principal por la que siempre despierto con una sonrisa llena de planes y sueños que quiero cumplir a tu lado. Gracias por tu cariño, por tu respeto y por ser esa mujer excepcional que tengo el honor de llamar mi compañera eterna y mi gran amor."
         ];
 
+        // 30 CITAS DETALLADAS (BACKUP)
         const backupDates = [
-            "Cocinemos pasta italiana desde cero.", "Picnic nocturno en la sala con velas.", "Noche de spa casero relajante.", "Maratón de nuestras pelis favoritas.", "Sesión de arte pintando tazas.", "Reto de cocina con sobras ricas.", "Hagamos una cápsula del tiempo.", "Picnic de estrellas desde la ventana.", "Karaoke en YouTube a todo pulmón.", "Noche de videojuegos con snacks.", "Degustación de chocolates a ciegas.", "Sesión de fotos tonta en casa.", "Construyamos un fuerte de almohadas.", "Noche de juegos de mesa clásicos.", "Hagamos un postre complejo juntos.", "Planear el viaje de nuestros sueños.", "Noche de preguntas profundas.", "Aprender un baile por YouTube.", "Spa de pies relajante.", "Ver álbumes de fotos viejos.", "Hacer pizza casera creativa.", "Yoga o meditación en pareja.", "Noche de lectura compartida.", "Crear una playlist de nuestra vida.", "Búsqueda del tesoro con notitas.", "Manualidades con plastilina o arcilla.", "Cena temática de otro país.", "Guerra de almohadas y risas.", "Hacer una lista de agradecimientos.", "Tomar café sin pantallas, solo nosotros."
+            "Cocinemos juntos una pasta italiana desde cero, desde la masa hasta la salsa, mientras ponemos música romántica de fondo y bailamos lento en la sala esperando a que la cena esté lista.",
+            "Preparemos un picnic nocturno en el suelo de la sala, con muchas mantas suaves, cojines cómodos y sandwiches gourmet para hablar de nuestros sueños más profundos bajo la luz de guirnaldas y velas.",
+            "Noche de spa casero totalmente relajante, con música Zen, masajes con aceites aromáticos y mascarillas faciales para desconectar del estrés exterior y reconectar solo nosotros dos en paz.",
+            "Maratón de nuestras películas favoritas de la infancia, preparando palomitas calientes con mucha mantequilla y quedándonos acurrucados bajo una manta térmica durante toda la noche de cine nostálgico.",
+            "Sesión de arte compartido donde pintemos lienzos o tazas blancas el uno para el otro, usando mucha creatividad y colores para representar lo que más amamos de nuestra relación y nuestra historia juntos.",
+            "Reto de cocina creativa utilizando únicamente lo que encontremos en la nevera ahora mismo para inventar un plato totalmente nuevo y delicioso, el que pierda en sabor deberá dar un masaje al ganador.",
+            "Hagamos una cápsula del tiempo personalizada donde escribamos cartas detalladas para leer en exactamente un año, guardando también pequeños recuerdos de hoy en una cajita decorada por los dos.",
+            "Picnic de observación de estrellas desde la ventana o el balcón, preparando un chocolate caliente espeso con malvaviscos y compartiendo planes emocionantes para nuestros futuros viajes y metas.",
+            "Sesión de karaoke en YouTube cantando a todo pulmón nuestros temas favoritos, sin importar si desafinamos o no, lo importante es la diversión absoluta y reírnos juntos hasta que nos duela la barriga.",
+            "Noche de videojuegos competitiva con muchos snacks crujientes y bebidas favoritas, estableciendo un sistema de puntos donde el gran ganador final elija el plan detallado para nuestra próxima gran cita.",
+            "Degustación de chocolates o quesos a ciegas, comprando diferentes variedades e intentando adivinar los ingredientes y puntuarlos en una libretita para descubrir cuáles son nuestros nuevos favoritos comunes.",
+            "Sesión de fotos divertida en casa, usando ropa diferente, accesorios locos y creando recuerdos visuales originales que capturen nuestra felicidad y esa complicidad que nos hace tan especiales como pareja.",
+            "Construyamos un fuerte gigante usando todas las almohadas y sábanas de la casa para meternos dentro a leer cuentos cortos o historias interesantes, disfrutando de la calidez de nuestro propio refugio.",
+            "Noche de juegos de mesa clásicos como cartas, dominó o el que prefieran, apostando mimos, besos o promesas de pequeñas tareas del hogar para hacer la competencia mucho más dulce y entretenida.",
+            "Hagamos un postre complejo siguiendo un tutorial de repostería paso a paso, decorándolo con muchas chispas y fresas para luego disfrutar juntos del dulce y delicioso resultado de nuestro trabajo en equipo.",
+            "Planear con todo detalle el viaje de nuestros sueños, investigando hoteles hermosos, rutas turísticas, precios y mirando fotos del lugar ideal donde queremos estar juntos en las próximas vacaciones.",
+            "Noche de preguntas profundas para conocernos aún más, usando listas de internet que nos hagan reflexionar sobre la vida, el amor y nuestros sentimientos, fortaleciendo así nuestra conexión emocional.",
+            "Aprender un baile totalmente nuevo siguiendo un tutorial por YouTube, intentando pasos de salsa, bachata o tango aunque tropecemos mil veces, riendo y disfrutando del ritmo y el contacto mutuo hoy.",
+            "Spa de pies relajante con agua tibia, sales aromáticas y flores, dándonos mimos mientras escuchamos una playlist de jazz suave que nos transporte a un estado de calma total dentro de nuestro hogar.",
+            "Ver álbumes de fotos viejos o carpetas digitales de cuando éramos niños y de nuestros primeros meses juntos, recordando anécdotas divertidas y dándonos cuenta de cuánto hemos crecido y cambiado juntos.",
+            "Hacer pizzas caseras personalizadas donde cada uno elija su mitad con los ingredientes más locos y deliciosos, compitiendo por ver quién crea la combinación más sabrosa antes de meterlas al horno.",
+            "Sesión de yoga o meditación guiada para parejas, conectando nuestras respiraciones y buscando la paz interior juntos en un ambiente decorado con incienso y luz tenue para una conexión de almas total.",
+            "Noche de lectura compartida donde leamos un capítulo de un libro interesante o poemas románticos en voz alta el uno para el otro, disfrutando de la voz de nuestra pareja y de la historia elegida.",
+            "Crear juntos una lista de reproducción en Spotify que defina perfectamente nuestra historia de amor, añadiendo canciones que nos recuerden momentos especiales para que podamos escucharla siempre que queramos.",
+            "Búsqueda del tesoro en casa, escondiendo notitas dulces y pequeñas sorpresas por diferentes habitaciones para que el otro tenga que hallarlas siguiendo pistas divertidas llenas de cariño y respeto.",
+            "Hacer manualidades creativas con arcilla, plastilina o pinturas, intentando esculpir o modelar algo que represente nuestro amor o un símbolo que sea solo nuestro, disfrutando de la risa y el proceso creativo.",
+            "Cena temática de algún país que nos encante, decorando un poco la mesa acorde a esa cultura elegida y cocinando platos típicos para viajar a través del paladar sin salir de nuestro rincón especial.",
+            "Guerra de almohadas moderada seguida de una sesión de cosquillas y risas, dejando salir nuestra parte más infantil y jovial para llenar la casa de alegría y de esa energía positiva que nos une.",
+            "Escribir juntos una lista de 50 cosas que amamos profundamente del otro y leérnoslas frente a frente, tomados de las manos, para recordarnos por qué somos tan afortunados de habernos encontrado en la vida.",
+            "Simplemente sentarnos a tomar un café o té caliente sin celulares ni distracciones, solo para mirarnos a los ojos, estar presentes y disfrutar de la maravillosa compañía del otro en total silencio y paz."
         ];
 
         async function callGemini(prompt, systemInstruction) {
@@ -388,7 +457,7 @@
                     const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/\*\*/g, '')?.trim();
                     if (text) return text;
                 }
-            } catch (e) { console.error("Error AI:", e); }
+            } catch (e) { console.error("API Error:", e); }
             return null;
         }
 
@@ -475,12 +544,12 @@
                 note.innerText = fav.source === 'ai' ? `"${fav.text}"` : `*${fav.text}*`;
                 note.style.transform = `rotate(${Math.random() * 8 - 4}deg)`;
                 if (oldNote) { oldNote.classList.add('leaving'); setTimeout(() => oldNote.remove(), 1200); }
-                setTimeout(() => { slotDiv.appendChild(note); setTimeout(() => note.classList.add('active'), 100); }, idx * 400); 
+                setTimeout(() => { slotDiv.appendChild(note); setTimeout(() => note.classList.add('active'), 100); }, idx * 300); 
             });
         }
         setInterval(() => { if (favorites.length > 6) { favRotationIndex = (favRotationIndex + 1) % favorites.length; renderCollage(); } }, 15000);
 
-        const DIARY_EMOJIS = ["🧸", "🌷", "✨", "🎀", "🐧", "🐱", "🐶", "🧁", "🌈", "🦋", "🌹", "🍰", "🎈"];
+        const DIARY_EMOJIS = ["🧸", "🌷", "✨", "🎀", "🐧", "🐱", "🐶", "🧁", "🌈", "🦋", "🌸", "🌹", "🍰", "🎈"];
         function updateDiaryStickers(hasLeft, hasRight) {
             ["L1", "L2", "L3", "L4"].forEach(id => {
                 const el = document.getElementById(`sticker-${id}`);
@@ -498,11 +567,11 @@
             window.onSnapshot(window.diaryCollection, (snap) => {
                 entries = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => b.date.toMillis() - a.date.toMillis());
                 renderBook();
-            }, (err) => console.error("Firebase Diario Error:", err));
+            }, (err) => console.error("Diary Error:", err));
             window.onSnapshot(window.favsCollection, (snap) => {
                 favorites = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
                 renderCollage(); renderBook(); updateFavButtonState();
-            }, (err) => console.error("Firebase Favs Error:", err));
+            }, (err) => console.error("Favs Error:", err));
         });
 
         function renderBook() {
@@ -530,7 +599,7 @@
             document.getElementById('next-page').disabled = currentIndex === 0;
         }
 
-        // --- SOBRE (FIJO) ---
+        // --- SOBRE ---
         const envelope = document.getElementById('envelope-wrapper'), letter = document.getElementById('target-letter'), flap = document.getElementById('envelope-flap'), helperText = document.getElementById('helper-text-envelope');
         let envStep = 0;
         function resetValentine() {
@@ -556,35 +625,64 @@
         btnYes.onclick = () => { if (noCount === 0) showSuccessUI("¡Siiii!", "Sabía que aceptarías a la primera. ¡Me haces el más feliz! ❤️"); else showSuccessUI("¡Al fin!", "Te costó un poquito pero ya eres mi San Valentín oficial. ¡Te amo! ❤️"); };
         function showSuccessUI(title, msg) { document.getElementById('content-asking').classList.add('hidden'); document.getElementById('content-success').classList.remove('hidden'); document.getElementById('success-title').innerText = title; document.getElementById('success-message').innerText = msg; confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } }); }
 
-        // --- IA ACCIONES (CORREGIDO) ---
+        // --- IA ACCIONES ---
         document.getElementById('btn-save-diary').onclick = async function() {
             const dateVal = document.getElementById('diary-date').value, textVal = document.getElementById('diary-text').value.trim();
             if (!dateVal || !textVal || !window.isAuthReady) return;
             this.disabled = true; document.getElementById('diary-loader').classList.remove('hidden');
-            const res = await callGemini(textVal, "Asistente amoroso. Corrige ortografía y gramática. Añade pequeñas frases dulces para fluidez. Máximo 45 palabras.");
+            const res = await callGemini(textVal, "Asistente amoroso. Corrige ortografía y gramática. Puedes añadir pequeñas frases dulces solo si mejoran la fluidez, pero NO cambies el sentido ni alargues mucho. Máximo 60 palabras.");
             try { await window.addDoc(window.diaryCollection, { content: res || textVal, date: window.Timestamp.fromDate(new Date(dateVal)), createdAt: window.Timestamp.now() }); document.getElementById('diary-text').value = ""; currentIndex = 0; } catch (e) {} finally { this.disabled = false; document.getElementById('diary-loader').classList.add('hidden'); }
         };
 
+        let currentMsgIndex = -1;
         document.getElementById('btn-ai-msg').onclick = async function() {
             this.disabled = true; this.innerHTML = '<span class="loader"></span>';
-            const res = await callGemini("Dedicación amorosa", "Escribe una frase corta de amor, apoyo o confianza para mi pareja. No uses nombres. Sé muy variado y creativo con las metáforas. Máximo 40 palabras.");
-            lastGeneratedMsg = res || backupDedications[Math.floor(Math.random() * backupDedications.length)];
+            const res = await callGemini("Dedicación amorosa extensa", "Escribe un mensaje de amor, apoyo, respeto o lealtad para mi pareja. No uses nombres. Sé muy creativo, tierno y expresivo. El mensaje debe ser extenso y profundo (60-80 palabras).");
+            
+            if(!res) {
+                let nextIdx;
+                do { nextIdx = Math.floor(Math.random() * backupDedications.length); } while (nextIdx === currentMsgIndex);
+                currentMsgIndex = nextIdx;
+                lastGeneratedMsg = backupDedications[currentMsgIndex];
+            } else {
+                lastGeneratedMsg = res;
+            }
+            
             document.getElementById('ai-msg-box').innerText = lastGeneratedMsg; document.getElementById('ai-msg-box').classList.remove('hidden');
             document.getElementById('btn-fav-msg').classList.remove('hidden'); updateFavButtonState(); this.disabled = false; this.innerHTML = 'Generar ✨';
         };
 
+        let currentDateIndex = -1;
         document.getElementById('btn-ai-date').onclick = async function() {
             this.disabled = true; this.innerHTML = '<span class="loader"></span>';
-            const res = await callGemini("Plan romántico", "Sugiere un plan detallado para dos en casa. Sé variado entre cocina, juegos o relax. Máximo 40 palabras.");
-            document.getElementById('ai-date-box').innerText = res || backupDates[Math.floor(Math.random() * backupDates.length)];
+            const res = await callGemini("Cita en casa detallada", "Sugiere un plan romántico y detallado para dos en casa hoy. El plan debe ser variado y creativo (60-80 palabras). No repitas ideas anteriores.");
+            
+            if(!res) {
+                let nextIdx;
+                do { nextIdx = Math.floor(Math.random() * backupDates.length); } while (nextIdx === currentDateIndex);
+                currentDateIndex = nextIdx;
+                document.getElementById('ai-date-box').innerText = backupDates[currentDateIndex];
+            } else {
+                document.getElementById('ai-date-box').innerText = res;
+            }
+            
             document.getElementById('ai-date-box').classList.remove('hidden'); this.disabled = false; this.innerHTML = 'Sugerir ✨';
         };
 
         document.getElementById('btn-fav-msg').onclick = async function() {
             if(!lastGeneratedMsg || !window.isAuthReady) return;
             const isFav = favorites.some(f => f.text === lastGeneratedMsg);
-            if (isFav) { const docId = favorites.find(f => f.text === lastGeneratedMsg).id; await window.deleteDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'favoritos', docId)); }
-            else { await window.addDoc(window.favsCollection, { text: lastGeneratedMsg, source: backupDedications.includes(lastGeneratedMsg) ? 'backup' : 'ai', createdAt: window.Timestamp.now() }); }
+            if (isFav) { 
+                const docId = favorites.find(f => f.text === lastGeneratedMsg).id; 
+                await window.deleteDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'favoritos', docId)); 
+            }
+            else { 
+                await window.addDoc(window.favsCollection, { 
+                    text: lastGeneratedMsg, 
+                    source: backupDedications.includes(lastGeneratedMsg) ? 'backup' : 'ai', 
+                    createdAt: window.Timestamp.now() 
+                }); 
+            }
         };
 
         function updateFavButtonState() { document.getElementById('btn-fav-msg').innerText = favorites.some(f => f.text === lastGeneratedMsg) ? "❤️" : "⭐"; }
