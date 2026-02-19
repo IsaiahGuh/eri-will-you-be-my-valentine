@@ -29,6 +29,7 @@
         window.Timestamp = Timestamp;
         window.appId = appId;
         
+        // Regla 1: Rutas compartidas para persistencia global
         window.diaryCollection = collection(db, 'artifacts', appId, 'public', 'data', 'diario');
         window.favsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'favoritos');
         window.isAuthReady = false;
@@ -102,15 +103,8 @@
         @keyframes floatUpEffect {
             0% { transform: translateY(110vh) rotate(0deg) scale(0.5); opacity: 0; }
             10% { opacity: 0.5; }
-            90% { opacity: 0.5; }
             100% { transform: translateY(-15vh) rotate(360deg) scale(1.4); opacity: 0; }
         }
-
-        .petal {
-            position: absolute; background: #ffb3c1; border-radius: 150% 0 150% 0;
-            opacity: 0.2; pointer-events: none; animation: petalFall 15s linear infinite; z-index: 1;
-        }
-        @keyframes petalFall { 0% { transform: translateY(-10vh) rotate(0deg); } 100% { transform: translateY(110vh) rotate(360deg); } }
 
         .fav-grid {
             display: grid;
@@ -168,8 +162,6 @@
         .book { width: 100%; height: 100%; display: flex; background: #f0e6d2; box-shadow: 0 25px 60px rgba(0,0,0,0.25); border-radius: 12px; position: relative; }
         .book-spine { width: 12px; background: rgba(0,0,0,0.18); height: 100%; position: absolute; left: 50%; transform: translateX(-50%); z-index: 20; box-shadow: inset 0 0 12px rgba(0,0,0,0.25); }
         .page { flex: 1; background: #fdfbf7; padding: 45px; position: relative; overflow: hidden; background-image: linear-gradient(#e5e5e5 1px, transparent 1px); background-size: 100% 30px; display: flex; flex-direction: column; z-index: 5; }
-        .page-left { border-radius: 12px 0 0 12px; border-right: 1px solid #ddd; }
-        .page-right { border-radius: 0 12px 12px 0; border-left: 1px solid #ddd; }
         
         .page-footer {
             position: absolute;
@@ -182,10 +174,8 @@
             color: #718096;
             font-style: italic;
             font-weight: 500;
-            line-height: 1.3;
         }
 
-        /* Stickers Fijos del Diario */
         .diary-sticker-slot {
             position: absolute;
             font-size: 2.2rem;
@@ -211,7 +201,6 @@
             .book-container { height: auto; flex-direction: column; }
             .book { flex-direction: column; height: auto; }
             .page { min-height: 480px; padding: 30px; }
-            .book-spine { display: none; }
         }
     </style>
 </head>
@@ -222,7 +211,6 @@
     </audio>
 
     <div id="hearts-bg-container" class="fixed inset-0 pointer-events-none z-0 overflow-hidden"></div>
-    <div id="petals-container" class="fixed inset-0 pointer-events-none z-0 overflow-hidden"></div>
 
     <nav id="top-nav" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-white/80 backdrop-blur-md p-2 rounded-full shadow-xl border border-pink-100 flex items-center">
         <div id="nav-content" class="flex gap-3 px-2">
@@ -233,7 +221,6 @@
         </div>
     </nav>
 
-    <!-- SECCIÓN: BIENVENIDA -->
     <div id="section-welcome" class="min-h-screen flex flex-col items-center justify-center p-4 pt-24 text-center relative z-10">
         <div id="heart-word-cloud" class="relative w-[360px] h-[360px] md:w-[680px] md:h-[680px] mb-8 flex items-center justify-center">
             <h2 id="eri-label" class="romantic-font text-6xl md:text-9xl eri-label-gold opacity-0">Para mi Eri</h2>
@@ -241,7 +228,6 @@
         <p class="romantic-font text-xl md:text-4xl text-pink-400 opacity-90 animate-pulse mt-10">Donde cada palabra cuenta nuestra historia...</p>
     </div>
 
-    <!-- SECCIÓN: LANDING -->
     <div id="section-landing" class="hidden">
         <section class="min-h-screen flex flex-col items-center justify-center p-4 text-center relative z-10 pt-20">
             <div class="w-full max-w-3xl bg-white/95 backdrop-blur-sm p-10 rounded-3xl shadow-xl border border-pink-100">
@@ -257,7 +243,6 @@
                 <div class="envelope-wrapper" id="envelope-wrapper" style="width: 320px; height: 200px; position: relative; background: #ff8fa3; border-radius: 0 0 15px 15px; cursor: pointer;">
                     <div id="envelope-flap" class="flap" style="position: absolute; top: 0; width: 100%; height: 100%; background: #ff758f; clip-path: polygon(0 0, 100% 0, 50% 55%); z-index: 20; transform-origin: top; transition: 0.6s;"></div>
                     <div class="envelope-front-cover" style="position: absolute; width: 100%; height: 100%; z-index: 10; background: #ffb3c1; clip-path: polygon(0 0, 0 100%, 100% 100%, 100% 0, 50% 50%); border-radius: 0 0 15px 15px;"></div>
-                    <!-- La carta empieza desactivada para no captar el primer clic -->
                     <div id="target-letter" class="absolute top-0 left-[5%] w-[90%] h-[95%] flex items-center justify-center bg-white z-[5] opacity-0 transition-all duration-700 rounded shadow-md pointer-events-none" style="font-weight: bold; color: #ff4d4d; text-align: center; padding: 15px; cursor: pointer;">¡Recógeme! ❤️</div>
                 </div>
             </div>
@@ -265,7 +250,6 @@
         </section>
     </div>
 
-    <!-- SECCIÓN: PREGUNTA VALENTINE -->
     <div id="section-question" class="hidden">
         <section class="min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
             <div id="main-card" class="w-full max-w-4xl min-h-[500px] bg-white p-10 rounded-3xl shadow-2xl border-2 border-pink-200 flex flex-col items-center justify-center relative overflow-hidden text-center">
@@ -286,7 +270,6 @@
         </section>
     </div>
 
-    <!-- SECCIÓN: DIARIO -->
     <div id="section-diary" class="hidden min-h-screen pt-24 pb-32 flex flex-col items-center p-4">
         <h2 class="romantic-font text-5xl text-pink-600 mb-10">Nuestro Diario</h2>
         <div class="w-full max-w-lg bg-white p-8 rounded-3xl shadow-lg border-2 border-pink-100 mb-12">
@@ -301,28 +284,22 @@
         <div class="book-container" id="diary-book-area">
             <div class="book" id="book-element">
                 <div class="book-spine"></div>
-                
                 <div class="page page-left" id="diary-page-left">
-                    <!-- Stickers fijos Página Izquierda -->
                     <div class="diary-sticker-slot" style="top: 5%; left: 5%;" id="sticker-L1"></div>
                     <div class="diary-sticker-slot" style="top: 15%; right: 5%;" id="sticker-L2"></div>
                     <div class="diary-sticker-slot" style="bottom: 15%; left: 10%;" id="sticker-L3"></div>
                     <div class="diary-sticker-slot" style="bottom: 5%; right: 10%;" id="sticker-L4"></div>
-
                     <div id="diary-page-left-content" class="flex flex-col h-full text-center justify-center opacity-60">
                         <p id="page-date-left" class="romantic-font text-xl text-pink-300 mb-3"></p>
                         <div id="page-body-left" class="text-gray-400 text-xs italic line-clamp-6"></div>
                     </div>
                     <div class="page-footer" id="footer-left"></div>
                 </div>
-
                 <div class="page page-right" id="diary-page-right">
-                    <!-- Stickers fijos Página Derecha -->
                     <div class="diary-sticker-slot" style="top: 8%; left: 12%;" id="sticker-R1"></div>
                     <div class="diary-sticker-slot" style="top: 5%; right: 10%;" id="sticker-R2"></div>
                     <div class="diary-sticker-slot" style="bottom: 10%; left: 5%;" id="sticker-R3"></div>
                     <div class="diary-sticker-slot" style="bottom: 15%; right: 5%;" id="sticker-R4"></div>
-
                     <div id="diary-page-right-content" class="flex flex-col h-full text-center justify-center">
                         <p id="page-date-right" class="romantic-font text-2xl text-pink-400 mb-4 border-b border-pink-100"></p>
                         <div id="page-body-right" class="text-gray-700 text-sm md:text-base italic font-medium px-6">Cargando nuestras páginas...</div>
@@ -338,11 +315,10 @@
         </div>
     </div>
 
-    <!-- SECCIÓN: MAGIA -->
+    <!-- MAGIA -->
     <div id="section-magic" class="hidden min-h-screen flex flex-col items-center justify-center p-4 pt-24 pb-40 relative z-10">
         <div class="w-full max-w-5xl bg-white rounded-3xl p-8 md:p-12 shadow-2xl">
             <h3 class="romantic-font text-5xl text-pink-500 mb-14 text-center">Nuestra Zona Mágica ✨</h3>
-            
             <div class="grid md:grid-cols-2 gap-8 mb-20">
                 <div class="bg-pink-50 p-6 rounded-2xl flex flex-col items-center min-h-[250px] justify-between shadow-inner">
                     <p class="text-gray-500 uppercase text-xs tracking-widest font-bold text-center">Dedicado a ti...</p>
@@ -358,7 +334,6 @@
                     <p id="ai-date-box" class="mt-4 text-indigo-700 text-center hidden font-semibold text-sm px-2"></p>
                 </div>
             </div>
-
             <div class="border-t pt-12">
                 <h4 class="romantic-font text-4xl text-pink-400 mb-10 text-center">Tus Favoritos ⭐</h4>
                 <div id="fav-collage" class="fav-grid">
@@ -374,14 +349,10 @@
     </div>
 
     <script>
-        const FALLBACK_KEY = "AIzaSyDrwdtqd2vKXBrROIWQO49ZynmGTaYShD4";
-        const apiKey = ""; // Entorno
-        
+        const apiKey = "AIzaSyDrwdtqd2vKXBrROIWQO49ZynmGTaYShD4";
         const audio = document.getElementById('romantic-music');
         let musicStarted = false;
-        let lastShownSource = "backup";
         let lastGeneratedMsg = "";
-        
         let entries = [];
         let favorites = [];
         let currentIndex = 0;
@@ -389,12 +360,20 @@
 
         const signatures = ["- Leandro", "- Leandro Guanoluisa", "- Isaías", "- Isaías Guanoluisa", "- IsaiahGuh", "- Issy", "- El amor de tu vida"];
 
+        // BACKUPS DE RESPALDO (30 + 30)
+        const backupDedications = [
+            "Eres mi sol en días nublados. Gracias por estar conmigo.", "Amo nuestra complicidad única.", "Tu sonrisa es mi lugar favorito.", "Gracias por creer en nosotros siempre.", "Eres mi calma en medio del caos.", "Cada detalle tuyo me enamora.", "Nuestra historia es mi libro preferido.", "Estar a tu lado es un regalo constante.", "Aprecio tu paciencia y tu ternura.", "Confío en ti con todo mi corazón.", "Eres mi mejor decisión.", "Tu amor me hace ser mejor persona.", "Gracias por apoyarme en cada paso.", "Amo nuestros silencios compartidos.", "Eres el hogar al que siempre quiero volver.", "Tu lealtad es mi mayor tesoro.", "Haces que todo sea más bonito.", "Gracias por tu respeto y confianza.", "Eres mi equipo, mi todo.", "Adoro cómo nos miramos.", "Cada beso tuyo es una promesa.", "Eres mi luz y mi paz.", "Te elijo hoy y siempre.", "Gracias por ser mi refugio.", "Amo ver cómo persigues tus sueños.", "Eres mi inspiración diaria.", "Nuestro amor es pura magia.", "Gracias por cuidarme tanto.", "Eres mi estrella del norte.", "Simplemente, te amo."
+        ];
+
+        const backupDates = [
+            "Cocinemos pasta italiana desde cero.", "Picnic nocturno en la sala con velas.", "Noche de spa casero relajante.", "Maratón de nuestras pelis favoritas.", "Sesión de arte pintando tazas.", "Reto de cocina con sobras ricas.", "Hagamos una cápsula del tiempo.", "Picnic de estrellas desde la ventana.", "Karaoke en YouTube a todo pulmón.", "Noche de videojuegos con snacks.", "Degustación de chocolates a ciegas.", "Sesión de fotos tonta en casa.", "Construyamos un fuerte de almohadas.", "Noche de juegos de mesa clásicos.", "Hagamos un postre complejo juntos.", "Planear el viaje de nuestros sueños.", "Noche de preguntas profundas.", "Aprender un baile por YouTube.", "Spa de pies relajante.", "Ver álbumes de fotos viejos.", "Hacer pizza casera creativa.", "Yoga o meditación en pareja.", "Noche de lectura compartida.", "Crear una playlist de nuestra vida.", "Búsqueda del tesoro con notitas.", "Manualidades con plastilina o arcilla.", "Cena temática de otro país.", "Guerra de almohadas y risas.", "Hacer una lista de agradecimientos.", "Tomar café sin pantallas, solo nosotros."
+        ];
+
         async function callGemini(prompt, systemInstruction) {
-            const activeKey = (typeof apiKey === 'string' && apiKey !== "") ? apiKey : FALLBACK_KEY;
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${activeKey}`;
-            
+            const salt = Math.random().toString(36).substring(7);
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             const payload = { 
-                contents: [{ parts: [{ text: prompt }] }], 
+                contents: [{ parts: [{ text: `${prompt} (Semilla: ${salt})` }] }], 
                 systemInstruction: { parts: [{ text: systemInstruction }] } 
             };
 
@@ -406,9 +385,10 @@
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    return data.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/\*\*/g, '')?.trim();
+                    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/\*\*/g, '')?.trim();
+                    if (text) return text;
                 }
-            } catch (e) {}
+            } catch (e) { console.error("Error AI:", e); }
             return null;
         }
 
@@ -417,7 +397,6 @@
             document.getElementById(`section-${id}`).classList.remove('hidden');
             window.scrollTo(0,0);
             if(id === 'welcome' && !heartFormed) startHeartAnimation();
-            if(id === 'diary') renderBook();
         }
 
         async function playMusic() {
@@ -433,11 +412,10 @@
                 }, 250);
             } catch (e) {}
         }
-        ['mousedown', 'touchstart', 'scroll', 'click'].forEach(evt => window.addEventListener(evt, playMusic, {once: true}));
 
-        // --- CORAZÓN ---
         let heartFormed = false;
         function startHeartAnimation() {
+            playMusic();
             heartFormed = true;
             const container = document.getElementById('heart-word-cloud');
             const wordsPool = ["Amor", "Vida", "Siempre", "Juntos", "Paz", "Luz", "Besos", "Sueños", "Magia", "Ternura", "Hogar", "Destino", "Alma", "Única", "Mundo", "Cariño", "Fuego", "Cielo", "Zen", "Amour", "Love", "Amore", "Eterno", "Mía", "Sinceridad", "Fuerza", "Lealtad", "Fidelidad", "Respeto", "Pasión", "Refugio", "Abrigo", "Dulzura", "Tesoro", "Esencia", "Risa", "Aliento", "Confidente", "Guía", "Arte", "Vuelo", "Latido", "Calma", "Unión", "Poesía", "Destino", "Aventura"];
@@ -446,15 +424,10 @@
             const isOverlap = (x, y, w, h) => occupied.some(p => Math.abs(p.x - x) < (w + p.w)/1.8 && Math.abs(p.y - y) < (h + p.h)/1.8);
 
             let count = 0;
-            const maxWords = 200;
             const interval = setInterval(() => {
-                if (count >= maxWords) { 
-                    clearInterval(interval); 
-                    document.getElementById('eri-label').style.opacity = "1";
-                    return; 
-                }
+                if (count >= 200) { clearInterval(interval); document.getElementById('eri-label').style.opacity = "1"; return; }
                 let attempts = 0;
-                while(attempts < 400) {
+                while(attempts < 300) {
                     const t = Math.random() * 2 * Math.PI;
                     const r = Math.pow(Math.random(), 0.6); 
                     const scale = (window.innerWidth < 768 ? 9 : 16) * r;
@@ -463,101 +436,61 @@
                     if (Math.abs(x) < 35 && Math.abs(y) < 25) { attempts++; continue; }
                     const word = wordsPool[count % wordsPool.length];
                     const fontSize = 9 + Math.random() * 9;
-                    const w = word.length * (fontSize * 0.6);
-                    const h = fontSize * 1.4;
-                    if(!isOverlap(x, y, w, h)) {
+                    if(!isOverlap(x, y, word.length * 6, fontSize * 1.5)) {
                         const span = document.createElement('span');
-                        span.className = 'heart-word';
-                        span.innerText = word;
-                        span.style.fontSize = fontSize + 'px';
-                        span.style.left = `calc(50% + ${x}px)`;
-                        span.style.top = `calc(50% + ${y}px)`;
+                        span.className = 'heart-word'; span.innerText = word; span.style.fontSize = fontSize + 'px';
+                        span.style.left = `calc(50% + ${x}px)`; span.style.top = `calc(50% + ${y}px)`;
                         container.appendChild(span);
-                        occupied.push({x, y, w, h});
-                        setTimeout(() => { span.style.opacity = (0.35 + Math.random() * 0.45); span.style.transform = "scale(1)"; }, 100);
+                        occupied.push({x, y, w: word.length * 6, h: fontSize * 1.5});
+                        setTimeout(() => { span.style.opacity = (0.35 + Math.random() * 0.4); span.style.transform = "scale(1)"; }, 100);
                         break;
                     }
                     attempts++;
                 }
                 count++;
-            }, 55);
+            }, 60);
         }
 
         function createBGHeart() {
             const container = document.getElementById('hearts-bg-container');
-            const h = document.createElement('div');
-            h.innerHTML = '❤️';
-            h.className = 'floating-bg-heart';
-            h.style.left = Math.random() * 100 + 'vw';
-            h.style.fontSize = (Math.random() * 22 + 8) + 'px';
+            const h = document.createElement('div'); h.innerHTML = '❤️'; h.className = 'floating-bg-heart';
+            h.style.left = Math.random() * 100 + 'vw'; h.style.fontSize = (Math.random() * 20 + 10) + 'px';
             container.appendChild(h);
             setTimeout(() => h.remove(), 12000);
         }
         setInterval(createBGHeart, 900);
 
-        // --- FAVORITOS ---
         function renderCollage() {
-            const total = favorites.length;
             const slots = [0,1,2,3,4,5];
             const colors = ['note-yellow', 'note-pink', 'note-blue', 'note-green', 'note-purple', 'note-yellow'];
-
             slots.forEach((i, idx) => {
                 const slotDiv = document.getElementById(`slot-${i}`);
                 const oldNote = slotDiv.querySelector('.fav-sticker');
-                let favIndex = total <= 6 ? i : (favRotationIndex + i) % total;
+                let favIndex = favorites.length <= 6 ? i : (favRotationIndex + i) % favorites.length;
                 const fav = favorites[favIndex];
-
-                if (!fav) {
-                    if (oldNote) { oldNote.classList.add('leaving'); setTimeout(() => oldNote.remove(), 1200); }
-                    return;
-                }
-
+                if (!fav) { if (oldNote) { oldNote.classList.add('leaving'); setTimeout(() => oldNote.remove(), 1200); } return; }
                 if (oldNote && oldNote.dataset.id === fav.id) return;
-
                 const note = document.createElement('div');
-                note.dataset.id = fav.id;
-                note.className = `fav-sticker ${colors[i % colors.length]} entering`;
+                note.dataset.id = fav.id; note.className = `fav-sticker ${colors[i % colors.length]} entering`;
                 note.innerText = fav.source === 'ai' ? `"${fav.text}"` : `*${fav.text}*`;
                 note.style.transform = `rotate(${Math.random() * 8 - 4}deg)`;
-
                 if (oldNote) { oldNote.classList.add('leaving'); setTimeout(() => oldNote.remove(), 1200); }
-
-                setTimeout(() => {
-                    slotDiv.appendChild(note);
-                    setTimeout(() => note.classList.add('active'), 100);
-                }, idx * 400); 
+                setTimeout(() => { slotDiv.appendChild(note); setTimeout(() => note.classList.add('active'), 100); }, idx * 400); 
             });
         }
-
         setInterval(() => { if (favorites.length > 6) { favRotationIndex = (favRotationIndex + 1) % favorites.length; renderCollage(); } }, 15000);
 
-        // --- DIARIO Y STICKERS ---
-        const DIARY_EMOJIS = ["🧸", "🌷", "✨", "🎀", "🐧", "🐱", "🐶", "🧁", "🌈", "🦋", "🌸", "💍", "🌹", "🍰", "🎈"];
-
+        const DIARY_EMOJIS = ["🧸", "🌷", "✨", "🎀", "🐧", "🐱", "🐶", "🧁", "🌈", "🦋", "🌹", "🍰", "🎈"];
         function updateDiaryStickers(hasLeft, hasRight) {
-            const slotsLeft = ["sticker-L1", "sticker-L2", "sticker-L3", "sticker-L4"];
-            const slotsRight = ["sticker-R1", "sticker-R2", "sticker-R3", "sticker-R4"];
-
-            slotsLeft.forEach(id => {
-                const el = document.getElementById(id);
-                if (hasLeft) {
-                    el.innerText = DIARY_EMOJIS[Math.floor(Math.random() * DIARY_EMOJIS.length)];
-                    el.classList.add('active');
-                    el.style.transform = `scale(1) rotate(${Math.random() * 40 - 20}deg)`;
-                } else {
-                    el.classList.remove('active');
-                }
+            ["L1", "L2", "L3", "L4"].forEach(id => {
+                const el = document.getElementById(`sticker-${id}`);
+                if (hasLeft) { el.innerText = DIARY_EMOJIS[Math.floor(Math.random() * DIARY_EMOJIS.length)]; el.classList.add('active'); el.style.transform = `scale(1) rotate(${Math.random() * 40 - 20}deg)`; }
+                else el.classList.remove('active');
             });
-
-            slotsRight.forEach(id => {
-                const el = document.getElementById(id);
-                if (hasRight) {
-                    el.innerText = DIARY_EMOJIS[Math.floor(Math.random() * DIARY_EMOJIS.length)];
-                    el.classList.add('active');
-                    el.style.transform = `scale(1) rotate(${Math.random() * 40 - 20}deg)`;
-                } else {
-                    el.classList.remove('active');
-                }
+            ["R1", "R2", "R3", "R4"].forEach(id => {
+                const el = document.getElementById(`sticker-${id}`);
+                if (hasRight) { el.innerText = DIARY_EMOJIS[Math.floor(Math.random() * DIARY_EMOJIS.length)]; el.classList.add('active'); el.style.transform = `scale(1) rotate(${Math.random() * 40 - 20}deg)`; }
+                else el.classList.remove('active');
             });
         }
 
@@ -565,186 +498,98 @@
             window.onSnapshot(window.diaryCollection, (snap) => {
                 entries = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => b.date.toMillis() - a.date.toMillis());
                 renderBook();
-            }, (err) => {});
+            }, (err) => console.error("Firebase Diario Error:", err));
             window.onSnapshot(window.favsCollection, (snap) => {
                 favorites = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-                renderCollage();
-                renderBook(); 
-                updateFavButtonState();
-            }, (err) => {});
+                renderCollage(); renderBook(); updateFavButtonState();
+            }, (err) => console.error("Firebase Favs Error:", err));
         });
 
         function renderBook() {
             if (entries.length === 0) return;
             const current = entries[currentIndex];
             const prev = entries[currentIndex + 1];
-            
-            // Detección para stickers: solo si hay entrada en la hoja correspondiente
             updateDiaryStickers(!!prev, !!current);
-
             document.getElementById('page-date-right').innerText = current.date.toDate().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
             document.getElementById('page-body-right').innerText = current.content;
-            
             const leftContent = document.getElementById('diary-page-left-content');
             if(prev) {
                 document.getElementById('page-date-left').innerText = prev.date.toDate().toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
                 document.getElementById('page-body-left').innerText = prev.content;
                 leftContent.parentElement.style.opacity = "1";
-            } else {
-                leftContent.parentElement.style.opacity = "0";
-            }
-            
-            const footerL = document.getElementById('footer-left');
-            const footerR = document.getElementById('footer-right');
+            } else leftContent.parentElement.style.opacity = "0";
+            const footerL = document.getElementById('footer-left'), footerR = document.getElementById('footer-right');
             footerL.innerText = ""; footerR.innerText = "";
-            
             if (favorites.length > 0) {
                 const f1Idx = Math.floor(Math.random() * favorites.length);
                 footerR.innerText = `"${favorites[f1Idx].text}" ${signatures[Math.floor(Math.random() * signatures.length)]}`;
-                if (favorites.length > 1) {
-                    const f2Idx = (f1Idx + 1) % favorites.length;
-                    footerL.innerText = `"${favorites[f2Idx].text}" ${signatures[Math.floor(Math.random() * signatures.length)]}`;
-                }
+                if (favorites.length > 1) footerL.innerText = `"${favorites[(f1Idx + 1) % favorites.length].text}" ${signatures[Math.floor(Math.random() * signatures.length)]}`;
             }
-
             document.getElementById('page-number').innerText = `${currentIndex + 1} / ${entries.length}`;
             document.getElementById('prev-page').disabled = currentIndex === entries.length - 1;
             document.getElementById('next-page').disabled = currentIndex === 0;
         }
 
-        // --- SOBRE Y CARTA (CORREGIDO 2 TOQUES) ---
-        const envelope = document.getElementById('envelope-wrapper');
-        const letter = document.getElementById('target-letter');
-        const flap = document.getElementById('envelope-flap');
-        const helperText = document.getElementById('helper-text-envelope');
+        // --- SOBRE (FIJO) ---
+        const envelope = document.getElementById('envelope-wrapper'), letter = document.getElementById('target-letter'), flap = document.getElementById('envelope-flap'), helperText = document.getElementById('helper-text-envelope');
         let envStep = 0;
-
         function resetValentine() {
-            envStep = 0;
-            flap.classList.remove('flap-open');
-            letter.classList.remove('letter-pull');
-            letter.style.opacity = '0';
-            letter.style.pointerEvents = 'none';
-            helperText.innerText = "Toca el sobre para abrirlo";
-            document.getElementById('content-asking').classList.remove('hidden');
-            document.getElementById('content-success').classList.add('hidden');
-            noCount = 0; 
-            const btnYes = document.getElementById('btn-yes');
-            const btnNo = document.getElementById('btn-no');
-            btnYes.style.transform = "scale(1)"; 
-            btnYes.classList.remove('centered-yes');
-            btnNo.style.position = 'static'; 
-            btnYes.innerText = "Sí"; btnNo.innerText = "No";
+            envStep = 0; flap.classList.remove('flap-open'); letter.classList.remove('letter-pull'); letter.style.opacity = '0'; letter.style.pointerEvents = 'none';
+            helperText.innerText = "Toca el sobre para abrirlo"; document.getElementById('content-asking').classList.remove('hidden'); document.getElementById('content-success').classList.add('hidden');
+            const btnYes = document.getElementById('btn-yes'), btnNo = document.getElementById('btn-no'); noCount = 0;
+            btnYes.style.transform = "scale(1)"; btnYes.classList.remove('centered-yes'); btnNo.style.position = 'static'; btnYes.innerText = "Sí"; btnNo.innerText = "No";
         }
+        envelope.onclick = () => { if (envStep === 0) { flap.classList.add('flap-open'); envStep = 1; setTimeout(() => { letter.style.opacity = '1'; letter.style.pointerEvents = 'auto'; helperText.innerText = "Toca la carta para sacarla"; }, 600); } };
+        letter.onclick = (e) => { e.stopPropagation(); if (envStep === 1) { letter.classList.add('letter-pull'); envStep = 2; setTimeout(() => showSection('question'), 1100); } };
 
-        envelope.onclick = (e) => {
-            if (envStep === 0) {
-                flap.classList.add('flap-open');
-                envStep = 1;
-                setTimeout(() => { 
-                    letter.style.opacity = '1'; 
-                    letter.style.pointerEvents = 'auto'; // Habilitar toque en la carta
-                    helperText.innerText = "Toca la carta para sacarla";
-                }, 600);
-            }
-        };
-
-        letter.onclick = (e) => {
-            e.stopPropagation(); // Evitar que el clic llegue al sobre
-            if (envStep === 1) {
-                letter.classList.add('letter-pull');
-                envStep = 2;
-                setTimeout(() => showSection('question'), 1100);
-            }
-        };
-
-        // --- SAN VALENTIN LÓGICA ---
-        const btnNo = document.getElementById('btn-no');
-        const btnYes = document.getElementById('btn-yes');
+        const btnNo = document.getElementById('btn-no'), btnYes = document.getElementById('btn-yes');
         let noCount = 0;
-
         btnNo.onmouseover = () => { if(noCount >= 3) { btnNo.style.position = 'absolute'; btnNo.style.left = Math.random() * 75 + '%'; btnNo.style.top = Math.random() * 75 + '%'; } };
-        
         btnNo.onclick = () => {
             noCount++;
-            const yesMsgs = ["sí, porfavor", "sí, si quiero", "sí, acepto", "sí, obvio", "sí, te amo", "sí, mil veces", "sí, claro", "sí, ya dale", "sí, por siempre", "sí, soy tuya"];
-            const noMsgs = ["no, no quiero", "no, te odio", "no, me caes mal", "no, ni lo sueñes"];
-            btnYes.innerText = yesMsgs[noCount % yesMsgs.length];
-            btnNo.innerText = noMsgs[noCount % noMsgs.length] || "No";
-            const scale = Math.min(1 + noCount * 0.25, 2.5);
-            btnYes.style.transform = btnYes.classList.contains('centered-yes') ? `translate(-50%, -50%) scale(${scale})` : `scale(${scale})`;
+            const yesMsgs = ["sí, porfavor", "sí, si quiero", "sí, acepto", "sí, obvio", "sí, te amo", "sí, mil veces", "sí, claro", "sí, ya dale", "sí, por siempre", "sí, soy tuya"], noMsgs = ["no, no quiero", "no, te odio", "no, me caes mal", "no, ni lo sueñes"];
+            btnYes.innerText = yesMsgs[noCount % yesMsgs.length]; btnNo.innerText = noMsgs[noCount % noMsgs.length] || "No";
+            const scale = Math.min(1 + noCount * 0.25, 2.5); btnYes.style.transform = btnYes.classList.contains('centered-yes') ? `translate(-50%, -50%) scale(${scale})` : `scale(${scale})`;
             if(noCount > 5) btnYes.classList.add('centered-yes');
             if(noCount >= 10) showSuccessUI("¡Ya eres mía!", "Te voy a obligar porque te amo demasiado para aceptar un no. 😍");
         };
+        btnYes.onclick = () => { if (noCount === 0) showSuccessUI("¡Siiii!", "Sabía que aceptarías a la primera. ¡Me haces el más feliz! ❤️"); else showSuccessUI("¡Al fin!", "Te costó un poquito pero ya eres mi San Valentín oficial. ¡Te amo! ❤️"); };
+        function showSuccessUI(title, msg) { document.getElementById('content-asking').classList.add('hidden'); document.getElementById('content-success').classList.remove('hidden'); document.getElementById('success-title').innerText = title; document.getElementById('success-message').innerText = msg; confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } }); }
 
-        btnYes.onclick = () => {
-            if (noCount === 0) showSuccessUI("¡Siiii!", "Sabía que aceptarías a la primera. ¡Me haces el más feliz! ❤️");
-            else showSuccessUI("¡Al fin!", "Te costó un poquito pero ya eres mi San Valentín oficial. ¡Te amo! ❤️");
-        };
-
-        function showSuccessUI(title, msg) {
-            document.getElementById('content-asking').classList.add('hidden');
-            document.getElementById('content-success').classList.remove('hidden');
-            document.getElementById('success-title').innerText = title;
-            document.getElementById('success-message').innerText = msg;
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-        }
-
-        // --- IA ACCIONES ---
+        // --- IA ACCIONES (CORREGIDO) ---
         document.getElementById('btn-save-diary').onclick = async function() {
-            const dateVal = document.getElementById('diary-date').value;
-            const textVal = document.getElementById('diary-text').value.trim();
+            const dateVal = document.getElementById('diary-date').value, textVal = document.getElementById('diary-text').value.trim();
             if (!dateVal || !textVal || !window.isAuthReady) return;
             this.disabled = true; document.getElementById('diary-loader').classList.remove('hidden');
-            
-            const systemPrompt = "Asistente romántico rápido. Corrige ortografía y gramática. Puedes añadir pequeñas frases dulces conectoras solo si mejoran la fluidez, sin cambiar la esencia. Máximo 45 palabras.";
-            const res = await callGemini(textVal, systemPrompt);
-            try {
-                await window.addDoc(window.diaryCollection, { content: res || textVal, date: window.Timestamp.fromDate(new Date(dateVal)), createdAt: window.Timestamp.now() });
-                document.getElementById('diary-text').value = ""; currentIndex = 0;
-            } catch (e) {} finally { this.disabled = false; document.getElementById('diary-loader').classList.add('hidden'); }
+            const res = await callGemini(textVal, "Asistente amoroso. Corrige ortografía y gramática. Añade pequeñas frases dulces para fluidez. Máximo 45 palabras.");
+            try { await window.addDoc(window.diaryCollection, { content: res || textVal, date: window.Timestamp.fromDate(new Date(dateVal)), createdAt: window.Timestamp.now() }); document.getElementById('diary-text').value = ""; currentIndex = 0; } catch (e) {} finally { this.disabled = false; document.getElementById('diary-loader').classList.add('hidden'); }
         };
 
         document.getElementById('btn-ai-msg').onclick = async function() {
             this.disabled = true; this.innerHTML = '<span class="loader"></span>';
-            const res = await callGemini("Amor", "Genera una frase corta de amor, apoyo o confianza. Sé variado y creativo. Máximo 40 palabras.");
-            lastGeneratedMsg = res || "Cada día contigo es mi parte favorita de la vida.";
-            lastShownSource = res ? "ai" : "backup";
-            const box = document.getElementById('ai-msg-box');
-            box.innerText = lastGeneratedMsg; box.classList.remove('hidden');
-            document.getElementById('btn-fav-msg').classList.remove('hidden');
-            updateFavButtonState();
-            this.disabled = false; this.innerHTML = 'Generar ✨';
+            const res = await callGemini("Dedicación amorosa", "Escribe una frase corta de amor, apoyo o confianza para mi pareja. No uses nombres. Sé muy variado y creativo con las metáforas. Máximo 40 palabras.");
+            lastGeneratedMsg = res || backupDedications[Math.floor(Math.random() * backupDedications.length)];
+            document.getElementById('ai-msg-box').innerText = lastGeneratedMsg; document.getElementById('ai-msg-box').classList.remove('hidden');
+            document.getElementById('btn-fav-msg').classList.remove('hidden'); updateFavButtonState(); this.disabled = false; this.innerHTML = 'Generar ✨';
         };
 
         document.getElementById('btn-ai-date').onclick = async function() {
             this.disabled = true; this.innerHTML = '<span class="loader"></span>';
-            const res = await callGemini("Plan", "Sugiere un plan detallado para dos en casa hoy. Varía entre juegos, cocina o relax. Máximo 40 palabras.");
-            const box = document.getElementById('ai-date-box');
-            box.innerText = res || "Cena italiana con velas y música suave.";
-            box.classList.remove('hidden');
-            this.disabled = false; this.innerHTML = 'Sugerir ✨';
+            const res = await callGemini("Plan romántico", "Sugiere un plan detallado para dos en casa. Sé variado entre cocina, juegos o relax. Máximo 40 palabras.");
+            document.getElementById('ai-date-box').innerText = res || backupDates[Math.floor(Math.random() * backupDates.length)];
+            document.getElementById('ai-date-box').classList.remove('hidden'); this.disabled = false; this.innerHTML = 'Sugerir ✨';
         };
 
         document.getElementById('btn-fav-msg').onclick = async function() {
             if(!lastGeneratedMsg || !window.isAuthReady) return;
             const isFav = favorites.some(f => f.text === lastGeneratedMsg);
-            if (isFav) {
-                const docId = favorites.find(f => f.text === lastGeneratedMsg).id;
-                await window.deleteDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'favoritos', docId));
-            } else {
-                await window.addDoc(window.favsCollection, { text: lastGeneratedMsg, source: lastShownSource, createdAt: window.Timestamp.now() });
-            }
+            if (isFav) { const docId = favorites.find(f => f.text === lastGeneratedMsg).id; await window.deleteDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'favoritos', docId)); }
+            else { await window.addDoc(window.favsCollection, { text: lastGeneratedMsg, source: backupDedications.includes(lastGeneratedMsg) ? 'backup' : 'ai', createdAt: window.Timestamp.now() }); }
         };
 
-        function updateFavButtonState() {
-            const btn = document.getElementById('btn-fav-msg');
-            btn.innerText = favorites.some(f => f.text === lastGeneratedMsg) ? "❤️" : "⭐";
-        }
-
+        function updateFavButtonState() { document.getElementById('btn-fav-msg').innerText = favorites.some(f => f.text === lastGeneratedMsg) ? "❤️" : "⭐"; }
         document.getElementById('prev-page').onclick = () => { if(currentIndex < entries.length - 1) { currentIndex++; renderBook(); } };
         document.getElementById('next-page').onclick = () => { if(currentIndex > 0) { currentIndex--; renderBook(); } };
-
         window.onload = () => showSection('welcome');
     </script>
 </body>
