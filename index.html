@@ -14,14 +14,13 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, Timestamp, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Inicialización Segura para el entorno
+        // Configuración segura del entorno
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'diario-amor-eri';
 
-        // Variables globales para persistencia
         window.db = db;
         window.auth = auth;
         window.addDoc = addDoc;
@@ -34,41 +33,29 @@
         window.entries = [];
         window.favorites = [];
 
-        // Configuración de Listeners (Se activa solo después de Auth)
+        // Listeners Globales
         const setupListeners = () => {
-            // Rutas públicas obligatorias según Regla 1
             const diaryCol = collection(db, 'artifacts', appId, 'public', 'data', 'diario');
             const favsCol = collection(db, 'artifacts', appId, 'public', 'data', 'favoritos');
             
             window.diaryCollection = diaryCol;
             window.favsCollection = favsCol;
 
-            // Escuchar Diario (Ordenando en memoria para evitar errores de índice en Firebase)
             onSnapshot(diaryCol, (snap) => {
-                window.entries = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => {
-                    const dateA = a.date?.toMillis() || 0;
-                    const dateB = b.date?.toMillis() || 0;
-                    return dateB - dateA;
-                });
+                window.entries = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (b.date?.toMillis() || 0) - (a.date?.toMillis() || 0));
                 if (window.renderBook) window.renderBook();
-            }, (err) => console.error("Error Firestore Diario:", err));
+            }, (err) => console.error("Error Diario:", err));
 
-            // Escuchar Favoritos
             onSnapshot(favsCol, (snap) => {
-                window.favorites = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => {
-                    const dateA = a.createdAt?.toMillis() || 0;
-                    const dateB = b.createdAt?.toMillis() || 0;
-                    return dateB - dateA;
-                });
+                window.favorites = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
                 if (window.renderCollage) window.renderCollage();
                 if (window.updateFavButtonState) window.updateFavButtonState();
                 if (window.renderBook) window.renderBook();
-            }, (err) => console.error("Error Firestore Favoritos:", err));
+            }, (err) => console.error("Error Favoritos:", err));
         };
 
         const startConnection = async () => {
             try {
-                // Autenticación obligatoria antes de cualquier operación
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
@@ -79,12 +66,10 @@
                     if (user) {
                         window.isAuthReady = true;
                         setupListeners();
-                        const toastEl = document.getElementById('msg-toast');
-                        if(toastEl) toastEl.style.opacity = "0";
+                        document.getElementById('msg-toast').style.opacity = "0";
                     }
                 });
             } catch (e) {
-                console.error("Error de Conexión:", e);
                 setTimeout(startConnection, 2000);
             }
         };
@@ -93,109 +78,34 @@
     </script>
 
     <style>
-        body {
-            font-family: 'Quicksand', sans-serif;
-            background-color: #fff5f5;
-            overflow-x: hidden;
-            scroll-behavior: smooth;
-            -webkit-tap-highlight-color: transparent;
-        }
+        body { font-family: 'Quicksand', sans-serif; background-color: #fff5f5; overflow-x: hidden; scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
         .romantic-font { font-family: 'Dancing Script', cursive; }
-        
         button { border-radius: 9999px !important; white-space: nowrap; }
-        .btn-style {
-            @apply px-12 py-4 rounded-full font-bold shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 text-sm md:text-lg inline-flex items-center justify-center;
-            min-width: 150px;
-        }
-
-        .heart-word {
-            position: absolute; color: #ff4d4d; font-weight: 600; opacity: 0; transform: scale(0.3);
-            transition: opacity 2s ease-out, transform 1.5s ease-out; pointer-events: none; white-space: nowrap;
-        }
-
+        .btn-style { @apply px-12 py-4 rounded-full font-bold shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 text-sm md:text-lg inline-flex items-center justify-center; min-width: 150px; }
+        
         @keyframes LuxuryGoldFade {
             0%, 100% { color: #ffd700; transform: translate(-50%, -50%) scale(1); filter: drop-shadow(0 0 5px #000); }
             50% { color: #ffffa0; transform: translate(-50%, -50%) scale(1.05); filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.4)); }
         }
-        .eri-label-gold {
-            animation: LuxuryGoldFade 7s ease-in-out infinite; font-weight: 900; -webkit-text-stroke: 1.8px #000000;
-            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 100;
-            white-space: nowrap; text-align: center; opacity: 0; transition: opacity 3s ease-in;
-        }
+        .eri-label-gold { animation: LuxuryGoldFade 7s ease-in-out infinite; font-weight: 900; -webkit-text-stroke: 1.8px #000000; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 100; white-space: nowrap; opacity: 0; transition: opacity 3s ease-in; }
 
-        .floating-bg-heart {
-            position: absolute; color: #ff4d4d; pointer-events: none; z-index: 0;
-            animation: floatUpEffect 12s linear forwards;
-        }
+        .heart-word { position: absolute; color: #ff4d4d; font-weight: 600; opacity: 0; transform: scale(0.3); transition: opacity 2s ease-out, transform 1.5s ease-out; pointer-events: none; }
+        .floating-bg-heart { position: absolute; color: #ff4d4d; pointer-events: none; z-index: 0; animation: floatUpEffect 12s linear forwards; }
         @keyframes floatUpEffect {
             0% { transform: translateY(110vh) rotate(0deg) scale(0.5); opacity: 0; }
             10% { opacity: 0.5; }
-            90% { opacity: 0.5; }
             100% { transform: translateY(-15vh) rotate(360deg) scale(1.4); opacity: 0; }
         }
 
-        .fav-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 2rem;
-            width: 100%; max-width: 950px; margin: 0 auto; min-height: 550px;
-        }
-        
-        .fav-sticker-slot { display: flex; align-items: center; justify-content: center; perspective: 1200px; }
-
-        .fav-sticker {
-            padding: 24px; box-shadow: 6px 6px 15px rgba(0,0,0,0.1); width: 100%; max-width: 280px; aspect-ratio: 1/1;
-            font-size: 0.75rem; color: #2d3748; transition: all 1.8s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center;
-            text-align: center; word-wrap: break-word; overflow-wrap: break-word; position: relative;
-            background-color: #fff9c4;
-            clip-path: polygon(2% 3%, 25% 1%, 50% 4%, 75% 1%, 98% 3%, 99% 30%, 97% 60%, 100% 90%, 98% 97%, 70% 99%, 40% 96%, 10% 98%, 2% 80%, 4% 40%);
-        }
-
-        .fav-sticker.entering { opacity: 0; transform: translateY(20px) scale(0.95); }
-        .fav-sticker.active { opacity: 1; transform: translateY(0) scale(1); }
-        .fav-sticker.leaving { opacity: 0; transform: translateY(-20px) scale(0.95); }
-
-        .note-yellow { background-color: #fff9c4; }
-        .note-pink { background-color: #fce4ec; }
-        .note-blue { background-color: #e3f2fd; }
-        .note-green { background-color: #f1f8e9; }
-        .note-purple { background-color: #f3e5f5; }
-
-        .flap-open { transform: rotateX(180deg); z-index: 5 !important; }
-        .letter-pull { transform: translateY(-260px) !important; opacity: 1 !important; z-index: 50 !important; }
-
         .book-container { perspective: 2000px; width: 100%; max-width: 950px; height: 620px; display: flex; justify-content: center; margin-top: 20px; position: relative; }
         .book { width: 100%; height: 100%; display: flex; background: #f0e6d2; box-shadow: 0 25px 60px rgba(0,0,0,0.25); border-radius: 12px; position: relative; }
-        .book-spine { width: 12px; background: rgba(0,0,0,0.18); height: 100%; position: absolute; left: 50%; transform: translateX(-50%); z-index: 20; box-shadow: inset 0 0 12px rgba(0,0,0,0.25); }
+        .book-spine { width: 12px; background: rgba(0,0,0,0.18); height: 100%; position: absolute; left: 50%; transform: translateX(-50%); z-index: 20; }
         .page { flex: 1; background: #fdfbf7; padding: 45px; position: relative; overflow: hidden; background-image: linear-gradient(#e5e5e5 1px, transparent 1px); background-size: 100% 30px; display: flex; flex-direction: column; z-index: 5; }
-        
-        .page-footer {
-            position: absolute; bottom: 20px; left: 0; width: 100%; padding: 0 35px;
-            text-align: center; font-size: 0.65rem; color: #718096; font-style: italic; font-weight: 500;
-            line-height: 1.2;
-        }
-
-        .diary-sticker-slot {
-            position: absolute; font-size: 2.2rem; pointer-events: none; z-index: 10;
-            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1)); transition: all 0.6s ease; opacity: 0; transform: scale(0.5);
-        }
-        .diary-sticker-slot.active { opacity: 1; transform: scale(1); }
-
+        .fav-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; width: 100%; max-width: 950px; margin: 0 auto; min-height: 550px; }
+        .fav-sticker { padding: 24px; box-shadow: 6px 6px 15px rgba(0,0,0,0.1); width: 100%; aspect-ratio: 1/1; font-size: 0.75rem; transition: all 1.8s ease; display: flex; align-items: center; justify-content: center; text-align: center; background-color: #fff9c4; clip-path: polygon(2% 3%, 98% 1%, 99% 97%, 1% 99%); }
         .loader { border: 2px solid #f3f3f3; border-top: 2px solid #db2777; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        #msg-toast {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: #2d3748; color: white; padding: 10px 24px; border-radius: 99px;
-            font-size: 0.85rem; z-index: 1000; opacity: 1; transition: opacity 0.4s; pointer-events: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        @media (max-width: 768px) {
-            .fav-grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); gap: 1rem; }
-            .book-container { height: auto; flex-direction: column; }
-            .book { flex-direction: column; height: auto; }
-            .page { min-height: 480px; padding: 30px; }
-        }
+        #msg-toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #2d3748; color: white; padding: 10px 24px; border-radius: 99px; z-index: 1000; opacity: 1; transition: opacity 0.4s; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -204,444 +114,296 @@
         <source src="soundtrack.mp3" type="audio/mpeg">
     </audio>
 
-    <div id="msg-toast">Conectando rincón compartido...</div>
+    <div id="msg-toast">Estableciendo conexión compartida...</div>
     <div id="hearts-bg-container" class="fixed inset-0 pointer-events-none z-0 overflow-hidden"></div>
 
-    <nav id="top-nav" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-white/80 backdrop-blur-md p-2 rounded-full shadow-xl border border-pink-100 flex items-center">
-        <div id="nav-content" class="flex gap-3 px-2">
-            <button onclick="showSection('welcome')" class="btn-style text-pink-600 hover:bg-pink-50 min-w-[100px]">Inicio</button>
-            <button onclick="resetValentine(); showSection('landing')" class="btn-style bg-pink-500 text-white min-w-[140px]">San Valentín ❤️</button>
-            <button onclick="showSection('diary')" class="btn-style bg-pink-100 text-pink-700 min-w-[100px]">Diario 📖</button>
-            <button onclick="showSection('magic')" class="btn-style bg-indigo-500 text-white min-w-[100px]">Magia ✨</button>
-        </div>
+    <nav class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-white/80 backdrop-blur-md p-2 rounded-full shadow-xl border border-pink-100 flex gap-3 px-4">
+        <button onclick="showSection('welcome')" class="text-pink-600 font-bold px-4 py-2 hover:bg-pink-50 rounded-full transition-all">Inicio</button>
+        <button onclick="showSection('landing')" class="bg-pink-500 text-white font-bold px-6 py-2 rounded-full shadow-lg">San Valentín ❤️</button>
+        <button onclick="showSection('diary')" class="bg-pink-100 text-pink-700 font-bold px-4 py-2 rounded-full">Diario 📖</button>
+        <button onclick="showSection('magic')" class="bg-indigo-500 text-white font-bold px-4 py-2 rounded-full">Magia ✨</button>
     </nav>
 
     <!-- SECCIÓN BIENVENIDA -->
-    <div id="section-welcome" class="min-h-screen flex flex-col items-center justify-center p-4 pt-24 text-center relative z-10">
+    <div id="section-welcome" class="min-h-screen flex flex-col items-center justify-center p-4 text-center relative z-10">
         <div id="heart-word-cloud" class="relative w-[360px] h-[360px] md:w-[680px] md:h-[680px] mb-8 flex items-center justify-center">
             <h2 id="eri-label" class="romantic-font text-6xl md:text-9xl eri-label-gold opacity-0">Para mi Eri</h2>
         </div>
-        <p class="romantic-font text-xl md:text-4xl text-pink-400 opacity-90 animate-pulse mt-10">Donde cada palabra cuenta nuestra historia...</p>
+        <p class="romantic-font text-xl md:text-4xl text-pink-400 animate-pulse">Nuestra historia, unida para siempre...</p>
     </div>
 
-    <!-- SECCIÓN LANDING -->
-    <div id="section-landing" class="hidden">
-        <section class="min-h-screen flex flex-col items-center justify-center p-4 text-center relative z-10 pt-20">
-            <div class="w-full max-w-3xl bg-white/95 backdrop-blur-sm p-10 rounded-3xl shadow-xl border border-pink-100">
-                <h1 class="romantic-font text-5xl md:text-7xl text-pink-600 mb-6">Hola mi vida...</h1>
-                <p class="text-lg md:text-2xl leading-relaxed mb-4">Solo quería decirte lo mucho que <span class="text-pink-600 font-bold">te amo</span>.</p>
-                <p class="text-lg md:text-2xl leading-relaxed mb-4">Me la paso increíble cada día junto a ti. Me encanta cuando estamos <span class="text-pink-600 font-bold">cerquita</span>, pero también cuando nos toca estar a la <span class="text-pink-600 font-bold">distancia</span> y nos quedamos hablando por mensajes o llamadas. Eres mi todo.</p>
-                <div class="animate-bounce mt-14 text-pink-400 font-bold text-sm tracking-widest uppercase">Baja un poquito...</div>
-            </div>
-        </section>
-
-        <section id="envelope-section" class="min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
-            <div class="envelope-container flex justify-center">
-                <div class="envelope-wrapper" id="envelope-wrapper" style="width: 320px; height: 200px; position: relative; background: #ff8fa3; border-radius: 0 0 15px 15px; cursor: pointer;">
-                    <div id="envelope-flap" class="flap" style="position: absolute; top: 0; width: 100%; height: 100%; background: #ff758f; clip-path: polygon(0 0, 100% 0, 50% 55%); z-index: 20; transform-origin: top; transition: 0.6s;"></div>
-                    <div class="envelope-front-cover" style="position: absolute; width: 100%; height: 100%; z-index: 10; background: #ffb3c1; clip-path: polygon(0 0, 0 100%, 100% 100%, 100% 0, 50% 50%); border-radius: 0 0 15px 15px;"></div>
-                    <div id="target-letter" class="absolute top-0 left-[5%] w-[90%] h-[95%] flex items-center justify-center bg-white z-[5] opacity-0 transition-all duration-700 rounded shadow-md pointer-events-none" style="font-weight: bold; color: #ff4d4d; text-align: center; padding: 15px; cursor: pointer;">¡Recógeme! ❤️</div>
-                </div>
-            </div>
-            <p id="helper-text-envelope" class="mt-10 text-pink-400 font-medium animate-pulse">Toca el sobre para abrirlo</p>
-        </section>
+    <!-- SECCIÓN LANDING (SOBRE) -->
+    <div id="section-landing" class="hidden min-h-screen pt-24 flex flex-col items-center justify-center">
+        <div class="w-full max-w-3xl bg-white/90 p-8 rounded-3xl shadow-xl text-center mb-12">
+            <h1 class="romantic-font text-5xl text-pink-600 mb-4">Hola mi vida...</h1>
+            <p class="text-xl">Solo quería decirte lo mucho que <span class="text-pink-600 font-bold">te amo</span>. Eres mi todo.</p>
+        </div>
+        <div id="envelope-wrapper" class="relative w-[300px] h-[180px] bg-[#ff8fa3] rounded-b-xl cursor-pointer transition-all">
+            <div id="envelope-flap" class="absolute top-0 w-full h-full bg-[#ff758f] origin-top transition-all duration-500 z-20" style="clip-path: polygon(0 0, 100% 0, 50% 55%);"></div>
+            <div class="absolute w-full h-full bg-[#ffb3c1] z-10" style="clip-path: polygon(0 0, 0 100%, 100% 100%, 100% 0, 50% 50%);"></div>
+            <div id="target-letter" class="absolute top-0 left-[5%] w-[90%] h-[90%] bg-white flex items-center justify-center font-bold text-pink-500 opacity-0 transition-all z-0 shadow-md">¡Ábreme! ❤️</div>
+        </div>
+        <p id="helper-text" class="mt-8 text-pink-400 animate-bounce">Toca el sobre</p>
     </div>
 
-    <!-- SECCIÓN PREGUNTA VALENTINE -->
-    <div id="section-question" class="hidden">
-        <section class="min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
-            <div id="main-card" class="w-full max-w-4xl min-h-[500px] bg-white p-10 rounded-3xl shadow-2xl border-2 border-pink-200 flex flex-col items-center justify-center relative overflow-hidden text-center">
-                <div id="content-asking">
-                    <div class="text-6xl mb-10">🧸🌷✨</div>
-                    <h2 class="romantic-font text-4xl md:text-7xl text-pink-600 mb-14 px-4">¿Quieres ser mi San Valentín?</h2>
-                    <div id="button-area" class="relative w-full h-48 flex items-center justify-center gap-12 md:gap-40">
-                        <button id="btn-yes" class="btn-style bg-pink-500 text-white text-xl px-14 py-4 z-30">Sí</button>
-                        <button id="btn-no" class="btn-style bg-gray-200 text-gray-700 text-lg px-12 py-4 z-50">No</button>
-                    </div>
-                </div>
-                <div id="content-success" class="hidden flex-col items-center">
-                    <div class="text-8xl mb-10">🥳💕🥰</div>
-                    <h2 id="success-title" class="romantic-font text-5xl md:text-8xl text-pink-600 mb-6 font-bold"></h2>
-                    <p id="success-message" class="text-2xl md:text-4xl text-gray-700 italic px-4 whitespace-pre-line"></p>
+    <!-- SECCIÓN PREGUNTA -->
+    <div id="section-question" class="hidden min-h-screen flex items-center justify-center">
+        <div class="bg-white p-12 rounded-3xl shadow-2xl text-center max-w-2xl w-full border-2 border-pink-100">
+            <div id="content-asking">
+                <div class="text-6xl mb-6">🧸🌷✨</div>
+                <h2 class="romantic-font text-5xl text-pink-600 mb-12">¿Quieres ser mi San Valentín?</h2>
+                <div class="flex gap-12 justify-center relative h-32">
+                    <button id="btn-yes" class="btn-style bg-pink-500 text-white">Sí</button>
+                    <button id="btn-no" class="btn-style bg-gray-200 text-gray-700">No</button>
                 </div>
             </div>
-        </section>
+            <div id="content-success" class="hidden">
+                <div class="text-7xl mb-6">🥳💕🥰</div>
+                <h2 id="success-title" class="romantic-font text-6xl text-pink-600 mb-4">¡Siii!</h2>
+                <p id="success-message" class="text-2xl italic text-gray-600"></p>
+            </div>
+        </div>
     </div>
 
     <!-- SECCIÓN DIARIO -->
     <div id="section-diary" class="hidden min-h-screen pt-24 pb-32 flex flex-col items-center p-4">
-        <h2 class="romantic-font text-5xl text-pink-600 mb-10">Nuestro Diario</h2>
-        <div class="w-full max-w-lg bg-white p-8 rounded-3xl shadow-lg border-2 border-pink-100 mb-12">
-            <div class="space-y-4">
-                <input type="date" id="diary-date" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-pink-300">
-                <textarea id="diary-text" rows="3" placeholder="¿Qué momento guardamos hoy?..." class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-pink-300 resize-none"></textarea>
-                <button id="btn-save-diary" class="btn-style w-full bg-pink-500 text-white py-3 uppercase tracking-wide flex items-center justify-center gap-2">
-                    Guardar <span id="diary-loader" class="loader hidden"></span>
-                </button>
-            </div>
+        <h2 class="romantic-font text-5xl text-pink-600 mb-8">Nuestro Diario</h2>
+        <div class="w-full max-w-lg bg-white p-6 rounded-2xl shadow-lg border border-pink-50 mb-8">
+            <input type="date" id="diary-date" class="w-full p-2 border rounded-xl mb-3">
+            <textarea id="diary-text" rows="3" placeholder="Escribe un recuerdo..." class="w-full p-3 border rounded-xl mb-3 resize-none"></textarea>
+            <button id="btn-save-diary" class="w-full bg-pink-500 text-white py-3 rounded-full font-bold flex items-center justify-center gap-2">Guardar <span id="diary-loader" class="loader hidden"></span></button>
         </div>
-        <div class="book-container" id="diary-book-area">
-            <div class="book" id="book-element">
+        <div class="book-container">
+            <div class="book">
                 <div class="book-spine"></div>
-                
-                <div class="page page-left" id="diary-page-left">
-                    <div class="diary-sticker-slot" style="top: 8%; left: 8%;" id="sticker-L1"></div>
-                    <div class="diary-sticker-slot" style="top: 15%; right: 10%;" id="sticker-L2"></div>
-                    <div class="diary-sticker-slot" style="bottom: 20%; left: 12%;" id="sticker-L3"></div>
-                    <div class="diary-sticker-slot" style="bottom: 5%; right: 5%;" id="sticker-L4"></div>
-                    <div id="diary-page-left-content" class="flex flex-col h-full text-center justify-center opacity-60">
-                        <p id="page-date-left" class="romantic-font text-xl text-pink-300 mb-3"></p>
-                        <div id="page-body-left" class="text-gray-400 text-xs italic line-clamp-6"></div>
-                    </div>
-                    <div class="page-footer" id="footer-left"></div>
+                <div class="page" id="diary-page-left" style="opacity: 0.5;">
+                    <p id="page-date-left" class="romantic-font text-xl text-pink-400"></p>
+                    <div id="page-body-left" class="text-xs italic text-gray-500 mt-4"></div>
                 </div>
-
-                <div class="page page-right" id="diary-page-right">
-                    <div class="diary-sticker-slot" style="top: 5%; left: 10%;" id="sticker-R1"></div>
-                    <div class="diary-sticker-slot" style="top: 12%; right: 5%;" id="sticker-R2"></div>
-                    <div class="diary-sticker-slot" style="bottom: 8%; left: 6%;" id="sticker-R3"></div>
-                    <div class="diary-sticker-slot" style="bottom: 18%; right: 12%;" id="sticker-R4"></div>
-                    <div id="diary-page-right-content" class="flex flex-col h-full text-center justify-center">
-                        <p id="page-date-right" class="romantic-font text-2xl text-pink-400 mb-4 border-b border-pink-100"></p>
-                        <div id="page-body-right" class="text-gray-700 text-sm md:text-base italic font-medium px-6">Cargando nuestras páginas...</div>
-                    </div>
-                    <div class="page-footer" id="footer-right"></div>
+                <div class="page" id="diary-page-right">
+                    <p id="page-date-right" class="romantic-font text-2xl text-pink-500 border-b pb-2"></p>
+                    <div id="page-body-right" class="text-sm mt-6 leading-relaxed italic">Cargando nuestras páginas...</div>
                 </div>
             </div>
         </div>
-        <div class="flex gap-8 items-center mt-8">
-            <button id="prev-page" class="bg-white p-3 rounded-full shadow-md text-pink-500 disabled:opacity-30 border border-pink-100">◀</button>
+        <div class="flex gap-6 mt-6 items-center">
+            <button id="prev-page" class="bg-white p-3 rounded-full shadow text-pink-500 border">◀</button>
             <span id="page-number" class="font-bold text-pink-400">1 / 1</span>
-            <button id="next-page" class="bg-white p-3 rounded-full shadow-md text-pink-500 disabled:opacity-30 border border-pink-100">▶</button>
+            <button id="next-page" class="bg-white p-3 rounded-full shadow text-pink-500 border">▶</button>
         </div>
     </div>
 
     <!-- SECCIÓN MAGIA -->
-    <div id="section-magic" class="hidden min-h-screen flex flex-col items-center justify-center p-4 pt-24 pb-40 relative z-10">
-        <div class="w-full max-w-5xl bg-white rounded-3xl p-8 md:p-12 shadow-2xl">
-            <h3 class="romantic-font text-5xl text-pink-500 mb-14 text-center">Nuestra Zona Mágica ✨</h3>
-            <div class="grid md:grid-cols-2 gap-8 mb-20">
-                <div class="bg-pink-50 p-6 rounded-2xl flex flex-col items-center min-h-[250px] justify-between shadow-inner border border-pink-100">
-                    <p class="text-gray-500 uppercase text-xs tracking-widest font-bold text-center">Dedicado a ti...</p>
-                    <div class="flex gap-2 w-full">
-                        <button id="btn-ai-msg" class="btn-style flex-grow bg-pink-400 text-white text-xs uppercase shadow-lg">Generar ✨</button>
-                        <button id="btn-fav-msg" class="hidden w-14 bg-yellow-400 text-white rounded-full text-xl flex items-center justify-center shadow-md">⭐</button>
-                    </div>
-                    <p id="ai-msg-box" class="mt-4 text-pink-700 italic text-center hidden font-semibold text-sm px-2 transition-all duration-500"></p>
+    <div id="section-magic" class="hidden min-h-screen pt-24 p-4 flex flex-col items-center">
+        <h3 class="romantic-font text-5xl text-pink-500 mb-12">Nuestra Zona Mágica ✨</h3>
+        <div class="grid md:grid-cols-2 gap-6 w-full max-w-4xl mb-12">
+            <div class="bg-pink-50 p-6 rounded-2xl border border-pink-100 flex flex-col gap-4">
+                <p class="text-center text-xs font-bold text-pink-400 uppercase tracking-widest">Dedicado a ti</p>
+                <div class="flex gap-2">
+                    <button id="btn-ai-msg" class="flex-grow bg-pink-400 text-white py-3 rounded-xl font-bold shadow-md">Generar ✨</button>
+                    <button id="btn-fav-msg" class="hidden w-12 bg-yellow-400 text-white rounded-xl text-xl">⭐</button>
                 </div>
-                <div class="bg-indigo-50 p-6 rounded-2xl flex flex-col items-center min-h-[250px] justify-between shadow-inner border border-indigo-100">
-                    <p class="text-gray-500 uppercase text-xs tracking-widest font-bold text-center">¿Qué hacemos hoy?</p>
-                    <button id="btn-ai-date" class="btn-style w-full bg-indigo-400 text-white text-xs uppercase shadow-lg">Sugerir ✨</button>
-                    <p id="ai-date-box" class="mt-4 text-indigo-700 text-center hidden font-semibold text-sm px-2 transition-all duration-500"></p>
-                </div>
+                <p id="ai-msg-box" class="text-sm italic text-pink-700 hidden text-center"></p>
             </div>
-            <div class="border-t pt-12">
-                <h4 class="romantic-font text-4xl text-pink-400 mb-10 text-center">Tus Favoritos ⭐</h4>
-                <div id="fav-collage" class="fav-grid">
-                    <div class="fav-sticker-slot" id="slot-0"></div>
-                    <div class="fav-sticker-slot" id="slot-1"></div>
-                    <div class="fav-sticker-slot" id="slot-2"></div>
-                    <div class="fav-sticker-slot" id="slot-3"></div>
-                    <div class="fav-sticker-slot" id="slot-4"></div>
-                    <div class="fav-sticker-slot" id="slot-5"></div>
-                </div>
+            <div class="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 flex flex-col gap-4">
+                <p class="text-center text-xs font-bold text-indigo-400 uppercase tracking-widest">¿Qué hacemos hoy?</p>
+                <button id="btn-ai-date" class="w-full bg-indigo-400 text-white py-3 rounded-xl font-bold shadow-md">Sugerir ✨</button>
+                <p id="ai-date-box" class="text-sm italic text-indigo-700 hidden text-center"></p>
             </div>
+        </div>
+        <h4 class="romantic-font text-3xl text-pink-400 mb-6">Tus Favoritos ⭐</h4>
+        <div id="fav-collage" class="fav-grid">
+            <div id="slot-0"></div><div id="slot-1"></div><div id="slot-2"></div>
+            <div id="slot-3"></div><div id="slot-4"></div><div id="slot-5"></div>
         </div>
     </div>
 
     <script>
-        // API Key vacía para usar la provista por el entorno
-        const apiKey = "";
+        const apiKey = ""; // Se inyecta automáticamente en este entorno
         const audio = document.getElementById('romantic-music');
         let musicStarted = false;
         let lastGeneratedMsg = "";
         let currentIndex = 0;
-        let favRotationIndex = 0;
-        const signatures = ["- Leandro", "- Leandro Guanoluisa", "- Isaías", "- Isaías Guanoluisa", "- IsaiahGuh", "- Issy", "- El amor de tu vida"];
+
+        // --- LÓGICA IA CON BACKOFF ---
+        async function callGemini(prompt, systemInstruction) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemInstruction }] }
+            };
+
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        return data.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/\*\*/g, '')?.trim();
+                    }
+                } catch (e) {}
+                await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
+            }
+            return null;
+        }
 
         function toast(msg) {
             const el = document.getElementById('msg-toast');
-            if(!el) return;
             el.innerText = msg; el.style.opacity = "1";
-            setTimeout(() => el.style.opacity = "0", 3500);
-        }
-
-        async function callGemini(prompt, systemInstruction) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            const payload = { 
-                contents: [{ parts: [{ text: prompt }] }], 
-                systemInstruction: { parts: [{ text: systemInstruction }] } 
-            };
-
-            try {
-                const response = await fetch(url, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload) 
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    return data.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/\*\*/g, '')?.trim();
-                }
-            } catch (e) { console.error("Error Gemini:", e); }
-            return null;
+            setTimeout(() => el.style.opacity = "0", 3000);
         }
 
         function showSection(id) {
             document.querySelectorAll('[id^="section-"]').forEach(s => s.classList.add('hidden'));
-            const target = document.getElementById(`section-${id}`);
-            if (target) target.classList.remove('hidden');
-            window.scrollTo(0,0);
-            if(id === 'welcome' && !heartFormed) startHeartAnimation();
+            document.getElementById(`section-${id}`).classList.remove('hidden');
+            window.scrollTo(0, 0);
+            if (id === 'welcome' && !heartFormed) startHeartAnimation();
+            if (id === 'landing') resetEnvelope();
         }
 
-        async function playMusic() {
-            if (musicStarted) return;
-            try {
-                audio.volume = 0; await audio.play();
-                musicStarted = true;
-                let vol = 0;
-                const fadeIn = setInterval(() => {
-                    if (vol < 0.4) { vol += 0.04; audio.volume = vol; }
-                    else { clearInterval(fadeIn); }
-                }, 200);
-            } catch (e) {}
-        }
-
-        // --- ANIMACIÓN CORAZÓN ---
+        // --- CORAZÓN Y AMBIENTE ---
         let heartFormed = false;
         function startHeartAnimation() {
-            playMusic();
             heartFormed = true;
             const container = document.getElementById('heart-word-cloud');
-            const wordsPool = ["Amor", "Vida", "Siempre", "Juntos", "Paz", "Luz", "Besos", "Sueños", "Magia", "Ternura", "Hogar", "Destino", "Alma", "Única", "Mundo", "Cariño", "Fuego", "Cielo", "Zen", "Amour", "Love", "Amore", "Eterno", "Mía", "Sinceridad", "Fuerza", "Lealtad", "Fidelidad", "Respeto", "Pasión", "Refugio", "Abrigo", "Dulzura", "Tesoro", "Esencia", "Risa", "Aliento", "Confidente", "Guía", "Arte", "Vuelo", "Latido", "Calma", "Unión", "Poesía", "Destino", "Aventura"];
-            const occupied = [];
-            const isOverlap = (x, y, w, h) => occupied.some(p => Math.abs(p.x - x) < (w + p.w)/1.8 && Math.abs(p.y - y) < (h + p.h)/1.8);
+            const words = ["Amor", "Vida", "Siempre", "Juntos", "Paz", "Besos", "Sueños", "Hogar", "Alma", "Única", "Mundo", "Cariño", "Fuego", "Cielo", "Zen", "Love", "Amore", "Eterno", "Fuerza", "Dulzura"];
             let count = 0;
             const interval = setInterval(() => {
-                if (count >= 200) { clearInterval(interval); document.getElementById('eri-label').style.opacity = "1"; return; }
-                let attempts = 0;
-                while(attempts < 300) {
-                    const t = Math.random() * 2 * Math.PI;
-                    const r = Math.pow(Math.random(), 0.6); 
-                    const scale = (window.innerWidth < 768 ? 9 : 16) * r;
-                    const x = 16 * Math.pow(Math.sin(t), 3) * scale;
-                    const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * scale;
-                    if (Math.abs(x) < 35 && Math.abs(y) < 25) { attempts++; continue; }
-                    const word = wordsPool[count % wordsPool.length];
-                    const fontSize = 9 + Math.random() * 9;
-                    if(!isOverlap(x, y, word.length * 6, fontSize * 1.5)) {
-                        const span = document.createElement('span');
-                        span.className = 'heart-word'; span.innerText = word; span.style.fontSize = fontSize + 'px';
-                        span.style.left = `calc(50% + ${x}px)`; span.style.top = `calc(50% + ${y}px)`;
-                        container.appendChild(span);
-                        occupied.push({x, y, w: word.length * 6, h: fontSize * 1.5});
-                        setTimeout(() => { span.style.opacity = (0.35 + Math.random() * 0.4); span.style.transform = "scale(1)"; }, 100);
-                        break;
-                    }
-                    attempts++;
-                }
+                if (count >= 150) { clearInterval(interval); document.getElementById('eri-label').style.opacity = "1"; return; }
+                const t = Math.random() * 2 * Math.PI;
+                const r = Math.pow(Math.random(), 0.6);
+                const scale = (window.innerWidth < 768 ? 9 : 16) * r;
+                const x = 16 * Math.pow(Math.sin(t), 3) * scale;
+                const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * scale;
+                const span = document.createElement('span');
+                span.className = 'heart-word'; span.innerText = words[count % words.length];
+                span.style.fontSize = (8 + Math.random() * 10) + 'px';
+                span.style.left = `calc(50% + ${x}px)`; span.style.top = `calc(50% + ${y}px)`;
+                container.appendChild(span);
+                setTimeout(() => { span.style.opacity = "0.6"; span.style.transform = "scale(1)"; }, 100);
                 count++;
-            }, 60);
+            }, 50);
         }
 
-        function createBGHeart() {
-            const container = document.getElementById('hearts-bg-container');
-            if(!container) return;
+        setInterval(() => {
+            const c = document.getElementById('hearts-bg-container');
             const h = document.createElement('div'); h.innerHTML = '❤️'; h.className = 'floating-bg-heart';
             h.style.left = Math.random() * 100 + 'vw'; h.style.fontSize = (Math.random() * 20 + 10) + 'px';
-            container.appendChild(h);
+            c.appendChild(h);
             setTimeout(() => h.remove(), 12000);
+        }, 800);
+
+        // --- LÓGICA SOBRE ---
+        function resetEnvelope() {
+            const flap = document.getElementById('envelope-flap'), letter = document.getElementById('target-letter');
+            flap.style.transform = "rotateX(0deg)"; letter.style.opacity = "0"; letter.style.transform = "translateY(0)";
         }
-        setInterval(createBGHeart, 900);
-
-        // --- LÓGICA DE COLLAGE FAVORITOS ---
-        window.renderCollage = () => {
-            const slots = [0,1,2,3,4,5];
-            const colors = ['note-yellow', 'note-pink', 'note-blue', 'note-green', 'note-purple', 'note-yellow'];
-            slots.forEach((i, idx) => {
-                const slotDiv = document.getElementById(`slot-${i}`);
-                if(!slotDiv) return;
-                const oldNote = slotDiv.querySelector('.fav-sticker');
-                let favIndex = (window.favorites || []).length <= 6 ? i : (favRotationIndex + i) % (window.favorites || []).length;
-                const fav = (window.favorites || [])[favIndex];
-                
-                if (!fav) { if (oldNote) { oldNote.classList.add('leaving'); setTimeout(() => oldNote.remove(), 1200); } return; }
-                if (oldNote && oldNote.dataset.id === fav.id) return;
-                
-                const note = document.createElement('div');
-                note.dataset.id = fav.id; note.className = `fav-sticker ${colors[idx % colors.length]} entering`;
-                note.innerText = fav.source === 'ai' ? `"${fav.text}"` : `*${fav.text}*`;
-                note.style.transform = `rotate(${Math.random() * 8 - 4}deg)`;
-                
-                if (oldNote) { oldNote.classList.add('leaving'); setTimeout(() => oldNote.remove(), 1200); }
-                setTimeout(() => { slotDiv.appendChild(note); setTimeout(() => note.classList.add('active'), 100); }, idx * 300); 
-            });
-        }
-        setInterval(() => { if (window.favorites && window.favorites.length > 6) { favRotationIndex = (favRotationIndex + 1) % window.favorites.length; window.renderCollage(); } }, 15000);
-
-        // --- LÓGICA DEL DIARIO ---
-        const DIARY_EMOJIS = ["🧸", "🌷", "✨", "🎀", "🐧", "🐱", "🐶", "🧁", "🌈", "🦋", "🌸", "🌹", "🍰", "🎈"];
-        function updateDiaryStickers(hasLeft, hasRight) {
-            ["L1", "L2", "L3", "L4"].forEach(id => {
-                const el = document.getElementById(`sticker-${id}`);
-                if (!el) return;
-                if (hasLeft) { el.innerText = DIARY_EMOJIS[Math.floor(Math.random() * DIARY_EMOJIS.length)]; el.classList.add('active'); el.style.transform = `scale(1) rotate(${Math.random() * 40 - 20}deg)`; }
-                else el.classList.remove('active');
-            });
-            ["R1", "R2", "R3", "R4"].forEach(id => {
-                const el = document.getElementById(`sticker-${id}`);
-                if(!el) return;
-                if (hasRight) { el.innerText = DIARY_EMOJIS[Math.floor(Math.random() * DIARY_EMOJIS.length)]; el.classList.add('active'); el.style.transform = `scale(1) rotate(${Math.random() * 40 - 20}deg)`; }
-                else el.classList.remove('active');
-            });
-        }
-
-        window.renderBook = () => {
-            if (!window.entries || window.entries.length === 0) {
-                const bodyR = document.getElementById('page-body-right');
-                if(bodyR) bodyR.innerText = "Aún no hay recuerdos. Escribe nuestro primer momento arriba ❤️";
-                return;
+        document.getElementById('envelope-wrapper').onclick = function() {
+            const flap = document.getElementById('envelope-flap'), letter = document.getElementById('target-letter');
+            if (flap.style.transform !== "rotateX(180deg)") {
+                flap.style.transform = "rotateX(180deg)";
+                setTimeout(() => { letter.style.opacity = "1"; letter.style.transform = "translateY(-40px)"; document.getElementById('helper-text').innerText = "Saca la carta"; }, 400);
+            } else {
+                letter.style.transform = "translateY(-200px)";
+                setTimeout(() => showSection('question'), 800);
             }
-            const current = window.entries[currentIndex];
-            const prev = window.entries[currentIndex + 1];
-            updateDiaryStickers(!!prev, !!current);
-
-            if(current) {
-                document.getElementById('page-date-right').innerText = current.date.toDate().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-                document.getElementById('page-body-right').innerText = current.content;
-            }
-            
-            const leftContent = document.getElementById('diary-page-left-content');
-            if(prev && leftContent) {
-                document.getElementById('page-date-left').innerText = prev.date.toDate().toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-                document.getElementById('page-body-left').innerText = prev.content;
-                leftContent.parentElement.style.opacity = "1";
-            } else if (leftContent) {
-                leftContent.parentElement.style.opacity = "0";
-            }
-            
-            const footerL = document.getElementById('footer-left'), footerR = document.getElementById('footer-right');
-            if(footerL) footerL.innerText = ""; 
-            if(footerR) footerR.innerText = "";
-            
-            if (window.favorites && window.favorites.length > 0) {
-                const f1 = window.favorites[Math.floor(Math.random() * window.favorites.length)].text;
-                if(footerR) footerR.innerText = `"${f1.substring(0, 40)}..." ${signatures[Math.floor(Math.random() * signatures.length)]}`;
-                if (window.favorites.length > 1 && footerL) {
-                    const f2 = window.favorites[Math.floor(Math.random() * window.favorites.length)].text;
-                    footerL.innerText = `"${f2.substring(0, 40)}..." ${signatures[Math.floor(Math.random() * signatures.length)]}`;
-                }
-            }
-            document.getElementById('page-number').innerText = `${currentIndex + 1} / ${window.entries.length}`;
-            document.getElementById('prev-page').disabled = currentIndex === window.entries.length - 1;
-            document.getElementById('next-page').disabled = currentIndex === 0;
         };
 
-        // --- LÓGICA SOBRE Y CARTA ---
-        const envelope = document.getElementById('envelope-wrapper'), letter = document.getElementById('target-letter'), flap = document.getElementById('envelope-flap'), helperText = document.getElementById('helper-text-envelope');
-        let envStep = 0;
-        function resetValentine() {
-            envStep = 0; 
-            if(flap) flap.classList.remove('flap-open'); 
-            if(letter) {
-                letter.classList.remove('letter-pull'); letter.style.opacity = '0'; letter.style.pointerEvents = 'none';
-            }
-            if(helperText) helperText.innerText = "Toca el sobre para abrirlo"; 
-            document.getElementById('content-asking').classList.remove('hidden'); 
-            document.getElementById('content-success').classList.add('hidden');
-            noCount = 0;
-            const btnYes = document.getElementById('btn-yes');
-            const btnNo = document.getElementById('btn-no');
-            if(btnYes) { btnYes.style.transform = "scale(1)"; btnYes.classList.remove('centered-yes'); btnYes.innerText = "Sí"; }
-            if(btnNo) { btnNo.style.position = 'static'; btnNo.innerText = "No"; }
-        }
-
-        if(envelope) envelope.onclick = () => { if (envStep === 0) { flap.classList.add('flap-open'); envStep = 1; setTimeout(() => { letter.style.opacity = '1'; letter.style.pointerEvents = 'auto'; helperText.innerText = "Toca la carta para sacarla"; }, 600); } };
-        if(letter) letter.onclick = (e) => { e.stopPropagation(); if (envStep === 1) { letter.classList.add('letter-pull'); envStep = 2; setTimeout(() => showSection('question'), 1100); } };
-
+        // --- LÓGICA PREGUNTA ---
         const btnNo = document.getElementById('btn-no'), btnYes = document.getElementById('btn-yes');
         let noCount = 0;
-        if(btnNo) {
-            btnNo.onmouseover = () => { if(noCount >= 3) { btnNo.style.position = 'absolute'; btnNo.style.left = Math.random() * 75 + '%'; btnNo.style.top = Math.random() * 75 + '%'; } };
-            btnNo.onclick = () => {
-                noCount++;
-                const yesMsgs = ["sí, porfavor", "sí, si quiero", "sí, acepto", "sí, obvio", "sí, te amo", "sí, mil veces", "sí, claro", "sí, ya dale", "sí, por siempre", "sí, soy tuya"], noMsgs = ["no, no quiero", "no, te odio", "no, me caes mal", "no, ni lo sueñes"];
-                btnYes.innerText = yesMsgs[noCount % yesMsgs.length]; btnNo.innerText = noMsgs[noCount % noMsgs.length] || "No";
-                const scale = Math.min(1 + noCount * 0.25, 2.5); 
-                btnYes.style.transform = btnYes.classList.contains('centered-yes') ? `translate(-50%, -50%) scale(${scale})` : `scale(${scale})`;
-                if(noCount > 5) btnYes.classList.add('centered-yes');
-                if(noCount >= 10) showSuccessUI("¡Ya eres mía!", "Te voy a obligar porque te amo demasiado para aceptar un no. 😍");
-            };
-        }
-        if(btnYes) btnYes.onclick = () => { if (noCount === 0) showSuccessUI("¡Siiii!", "Sabía que aceptarías a la primera. ¡Me haces el más feliz! ❤️"); else showSuccessUI("¡Al fin!", "Te costó un poquito pero ya eres mi San Valentín oficial. ¡Te amo! ❤️"); };
-
-        function showSuccessUI(title, msg) { 
-            document.getElementById('content-asking').classList.add('hidden'); 
-            document.getElementById('content-success').classList.remove('hidden'); 
-            document.getElementById('success-title').innerText = title; 
-            document.getElementById('success-message').innerText = msg; 
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } }); 
+        btnNo.onmouseover = () => { if(noCount >= 3) { btnNo.style.position = 'absolute'; btnNo.style.left = Math.random() * 80 + '%'; btnNo.style.top = Math.random() * 80 + '%'; } };
+        btnNo.onclick = () => {
+            noCount++;
+            btnYes.style.transform = `scale(${1 + noCount * 0.2})`;
+            if(noCount >= 8) { showSuccessUI("¡Ya eres mía!", "Te amo demasiado para aceptar un no. 😍"); }
+        };
+        btnYes.onclick = () => showSuccessUI("¡Siiii!", "Me haces el más feliz del mundo. ❤️");
+        function showSuccessUI(t, m) {
+            document.getElementById('content-asking').classList.add('hidden');
+            document.getElementById('content-success').classList.remove('hidden');
+            document.getElementById('success-title').innerText = t;
+            document.getElementById('success-message').innerText = m;
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         }
 
-        // --- ACCIONES FORMULARIO DIARIO ---
-        document.getElementById('btn-save-diary').onclick = async function() {
-            const dateVal = document.getElementById('diary-date').value, textVal = document.getElementById('diary-text').value.trim();
-            if (!dateVal || !textVal) return;
-            if(!window.isAuthReady) { toast("Conectando base de datos..."); return; }
-            
-            this.disabled = true; document.getElementById('diary-loader').classList.remove('hidden');
-            const res = await callGemini(textVal, "Actúa como un corrector romántico. Mejora ligeramente la fluidez sin cambiar el sentido original ni añadir demasiada información nueva. Máximo 100 palabras.");
-            try { 
-                await window.addDoc(window.diaryCollection, { content: res || textVal, date: window.Timestamp.fromDate(new Date(dateVal)), createdAt: window.Timestamp.now() }); 
-                document.getElementById('diary-text').value = ""; currentIndex = 0; toast("Recuerdo guardado globalmente ❤️"); 
-            } catch (e) { toast("Error al guardar"); } finally { this.disabled = false; document.getElementById('diary-loader').classList.add('hidden'); }
+        // --- LÓGICA DIARIO ---
+        window.renderBook = () => {
+            const entries = window.entries || [];
+            if (entries.length === 0) return;
+            const current = entries[currentIndex], prev = entries[currentIndex + 1];
+            document.getElementById('page-date-right').innerText = current.date.toDate().toLocaleDateString();
+            document.getElementById('page-body-right').innerText = current.content;
+            if (prev) {
+                document.getElementById('page-date-left').innerText = prev.date.toDate().toLocaleDateString();
+                document.getElementById('page-body-left').innerText = prev.content;
+                document.getElementById('diary-page-left').style.opacity = "1";
+            } else { document.getElementById('diary-page-left').style.opacity = "0"; }
+            document.getElementById('page-number').innerText = `${currentIndex + 1} / ${entries.length}`;
         };
 
+        document.getElementById('btn-save-diary').onclick = async function() {
+            const date = document.getElementById('diary-date').value, text = document.getElementById('diary-text').value.trim();
+            if (!date || !text || !window.isAuthReady) return;
+            this.disabled = true; document.getElementById('diary-loader').classList.remove('hidden');
+            const res = await callGemini(text, "Corrige este texto para que suene más romántico y fluido, sin cambiar la historia. Máximo 80 palabras.");
+            try {
+                await window.addDoc(window.diaryCollection, { content: res || text, date: window.Timestamp.fromDate(new Date(date)), createdAt: window.Timestamp.now() });
+                document.getElementById('diary-text').value = ""; toast("Recuerdo compartido guardado ❤️");
+            } catch (e) { toast("Error al guardar"); }
+            this.disabled = false; document.getElementById('diary-loader').classList.add('hidden');
+        };
+
+        // --- LÓGICA MAGIA ---
         document.getElementById('btn-ai-msg').onclick = async function() {
             this.disabled = true; this.innerHTML = '<span class="loader"></span>';
-            const res = await callGemini("Dedicación de amor profunda y variada", "Escribe un mensaje de amor, apoyo, respeto o lealtad muy creativo de 80-100 palabras. No empieces siempre con 'Eres'.");
-            lastGeneratedMsg = res || "Te amo de una forma inexplicable.";
-            document.getElementById('ai-msg-box').innerText = lastGeneratedMsg; document.getElementById('ai-msg-box').classList.remove('hidden');
+            const res = await callGemini("Dime algo lindo", "Eres un novio profundamente enamorado de Eri. Escribe una dedicatoria de amor, apoyo o lealtad de 60 palabras. Sé creativo.");
+            lastGeneratedMsg = res;
+            document.getElementById('ai-msg-box').innerText = res; document.getElementById('ai-msg-box').classList.remove('hidden');
             document.getElementById('btn-fav-msg').classList.remove('hidden');
-            window.updateFavButtonState();
             this.disabled = false; this.innerHTML = 'Generar ✨';
+            window.updateFavButtonState();
         };
 
         document.getElementById('btn-ai-date').onclick = async function() {
             this.disabled = true; this.innerHTML = '<span class="loader"></span>';
-            const res = await callGemini("Plan romántico detallado en casa", "Sugiere un plan romántico muy original de 80-100 palabras para hacer en casa. Varía entre juegos, cocina o relax.");
-            document.getElementById('ai-date-box').innerText = res || "Hagamos un fuerte de almohadas.";
-            document.getElementById('ai-date-box').classList.remove('hidden');
+            const res = await callGemini("Sugiere un plan", "Sugiere un plan romántico detallado para hacer en casa de 60 palabras. Sé dulce.");
+            document.getElementById('ai-date-box').innerText = res; document.getElementById('ai-date-box').classList.remove('hidden');
             this.disabled = false; this.innerHTML = 'Sugerir ✨';
         };
 
         document.getElementById('btn-fav-msg').onclick = async function() {
-            if(!lastGeneratedMsg || !window.isAuthReady) { toast("Base de datos no lista..."); return; }
-            try {
-                const isFav = window.favorites.some(f => f.text === lastGeneratedMsg);
-                if (isFav) {
-                    const docId = window.favorites.find(f => f.text === lastGeneratedMsg).id;
-                    await window.deleteDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'favoritos', docId));
-                    toast("Eliminado de favoritos");
-                } else {
-                    await window.addDoc(window.favsCollection, { text: lastGeneratedMsg, source: 'ai', createdAt: window.Timestamp.now() });
-                    toast("¡Guardado en favoritos globales! ❤️");
-                }
-            } catch (e) { toast("Error en favoritos"); }
+            if(!lastGeneratedMsg || !window.isAuthReady) return;
+            const isFav = window.favorites.some(f => f.text === lastGeneratedMsg);
+            if (isFav) {
+                const id = window.favorites.find(f => f.text === lastGeneratedMsg).id;
+                await window.deleteDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'favoritos', id));
+                toast("Quitado de favoritos");
+            } else {
+                await window.addDoc(window.favsCollection, { text: lastGeneratedMsg, createdAt: window.Timestamp.now() });
+                toast("¡Guardado globalmente! ❤️");
+            }
         };
 
-        window.updateFavButtonState = () => { 
+        window.renderCollage = () => {
+            (window.favorites || []).slice(0, 6).forEach((f, i) => {
+                const slot = document.getElementById(`slot-${i}`);
+                slot.innerHTML = `<div class="fav-sticker">"${f.text}"</div>`;
+            });
+        };
+
+        window.updateFavButtonState = () => {
             const btn = document.getElementById('btn-fav-msg');
-            if (!btn) return;
-            const isFav = window.favorites && window.favorites.some(f => f.text === lastGeneratedMsg);
-            btn.innerText = isFav ? "❤️" : "⭐"; 
+            btn.innerText = window.favorites.some(f => f.text === lastGeneratedMsg) ? "❤️" : "⭐";
         };
 
-        document.getElementById('prev-page').onclick = () => { if(currentIndex < (window.entries || []).length - 1) { currentIndex++; window.renderBook(); } };
+        document.getElementById('prev-page').onclick = () => { if(currentIndex < window.entries.length - 1) { currentIndex++; window.renderBook(); } };
         document.getElementById('next-page').onclick = () => { if(currentIndex > 0) { currentIndex--; window.renderBook(); } };
-        
-        window.onload = () => showSection('welcome');
+
+        window.onload = () => { showSection('welcome'); };
     </script>
 </body>
 </html>
