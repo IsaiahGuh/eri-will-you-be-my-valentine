@@ -14,7 +14,6 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, Timestamp, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Configuración dinámica
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -30,7 +29,6 @@
         window.Timestamp = Timestamp;
         window.appId = appId;
         
-        // Regla 1: Rutas compartidas para persistencia global (Públicas)
         window.diaryCollection = collection(db, 'artifacts', appId, 'public', 'data', 'diario');
         window.favsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'favoritos');
         window.isAuthReady = false;
@@ -42,9 +40,11 @@
                 } else {
                     await signInAnonymously(auth);
                 }
+                console.log("Autenticación Firebase exitosa");
             } catch (e) {
-                console.warn("Firebase Auth Error (Vercel):", e.message);
-                // Fallback de seguridad para persistencia
+                console.error("Error crítico de Auth:", e);
+                // Reintento silencioso
+                setTimeout(initAuth, 3000);
             }
         };
         initAuth();
@@ -52,6 +52,7 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 window.isAuthReady = true;
+                console.log("Usuario listo:", user.uid);
                 window.dispatchEvent(new CustomEvent('firebase-ready'));
             }
         });
@@ -109,6 +110,7 @@
         @keyframes floatUpEffect {
             0% { transform: translateY(110vh) rotate(0deg) scale(0.5); opacity: 0; }
             10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
             100% { transform: translateY(-15vh) rotate(360deg) scale(1.4); opacity: 0; }
         }
 
@@ -197,11 +199,11 @@
         .loader { border: 2px solid #f3f3f3; border-top: 2px solid #db2777; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Mensaje flotante de feedback */
         #msg-toast {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: #2d3748; color: white; padding: 10px 20px; border-radius: 99px;
-            font-size: 0.8rem; z-index: 1000; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+            background: #2d3748; color: white; padding: 10px 24px; border-radius: 99px;
+            font-size: 0.85rem; z-index: 1000; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
         @media (max-width: 768px) {
@@ -362,8 +364,7 @@
     </div>
 
     <script>
-        const FALLBACK_KEY = "AIzaSyDrwdtqd2vKXBrROIWQO49ZynmGTaYShD4";
-        const apiKey = ""; // La clave se inyectará si el entorno la tiene, si no usará FALLBACK_KEY en la función.
+        const API_KEY_FALLBACK = "AIzaSyDrwdtqd2vKXBrROIWQO49ZynmGTaYShD4";
         const audio = document.getElementById('romantic-music');
         let musicStarted = false;
         let lastGeneratedMsg = "";
@@ -377,15 +378,14 @@
         function toast(msg) {
             const el = document.getElementById('msg-toast');
             el.innerText = msg; el.style.opacity = "1";
-            setTimeout(() => el.style.opacity = "0", 3000);
+            setTimeout(() => el.style.opacity = "0", 3500);
         }
 
         async function callGemini(prompt, systemInstruction) {
-            const currentKey = apiKey || FALLBACK_KEY;
             const salt = Math.random().toString(36).substring(7);
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${currentKey}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY_FALLBACK}`;
             const payload = { 
-                contents: [{ parts: [{ text: `${prompt} (Semilla: ${salt})` }] }], 
+                contents: [{ parts: [{ text: `${prompt} (Variación: ${salt})` }] }], 
                 systemInstruction: { parts: [{ text: systemInstruction }] } 
             };
 
@@ -399,7 +399,7 @@
                     const data = await response.json();
                     return data.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/\*\*/g, '')?.trim();
                 }
-            } catch (e) { console.error("AI Fetch Error:", e); }
+            } catch (e) { console.error("Error IA:", e); }
             return null;
         }
 
@@ -423,16 +423,15 @@
             } catch (e) {}
         }
 
+        // --- CORAZÓN ---
         let heartFormed = false;
         function startHeartAnimation() {
             playMusic();
             heartFormed = true;
             const container = document.getElementById('heart-word-cloud');
             const wordsPool = ["Amor", "Vida", "Siempre", "Juntos", "Paz", "Luz", "Besos", "Sueños", "Magia", "Ternura", "Hogar", "Destino", "Alma", "Única", "Mundo", "Cariño", "Fuego", "Cielo", "Zen", "Amour", "Love", "Amore", "Eterno", "Mía", "Sinceridad", "Fuerza", "Lealtad", "Fidelidad", "Respeto", "Pasión", "Refugio", "Abrigo", "Dulzura", "Tesoro", "Esencia", "Risa", "Aliento", "Confidente", "Guía", "Arte", "Vuelo", "Latido", "Calma", "Unión", "Poesía", "Destino", "Aventura"];
-            
             const occupied = [];
             const isOverlap = (x, y, w, h) => occupied.some(p => Math.abs(p.x - x) < (w + p.w)/1.8 && Math.abs(p.y - y) < (h + p.h)/1.8);
-
             let count = 0;
             const interval = setInterval(() => {
                 if (count >= 200) { clearInterval(interval); document.getElementById('eri-label').style.opacity = "1"; return; }
@@ -470,6 +469,7 @@
         }
         setInterval(createBGHeart, 900);
 
+        // --- FAVORITOS ---
         function renderCollage() {
             const slots = [0,1,2,3,4,5];
             const colors = ['note-yellow', 'note-pink', 'note-blue', 'note-green', 'note-purple', 'note-yellow'];
@@ -541,6 +541,7 @@
             document.getElementById('next-page').disabled = currentIndex === 0;
         }
 
+        // --- SOBRE ---
         const envelope = document.getElementById('envelope-wrapper'), letter = document.getElementById('target-letter'), flap = document.getElementById('envelope-flap'), helperText = document.getElementById('helper-text-envelope');
         let envStep = 0;
         function resetValentine() {
@@ -571,24 +572,31 @@
             "Desde que llegaste a mi vida, todo tiene un color diferente y más brillante. Eres esa paz que siempre busqué y el apoyo incondicional que me hace sentir que puedo enfrentar cualquier tormenta si estás a mi lado. Gracias por elegirme cada día.",
             "Me encanta perderme en nuestra complicidad única, donde sobran las palabras porque nuestras miradas lo dicen todo. Eres mi refugio seguro, mi mejor amiga y el amor que siempre soñé tener conmigo para compartir cada pequeño momento de la existencia.",
             "Tu sonrisa es, sin duda alguna, mi lugar favorito en el mundo entero y la razón por la que siempre busco ser una mejor persona. Aprecio infinitamente tu paciencia, tu ternura y esa forma tan hermosa en la que cuidas de lo nuestro con tanto respeto.",
-            "Gracias por creer en nosotros incluso en esos momentos de duda, tu confianza es el motor que me impulsa a seguir adelante con alegría. No importa qué tan lejos estemos, mi corazón siempre te pertenece porque eres mi hogar y mi mayor orgullo."
+            "Gracias por creer en nosotros incluso en esos momentos de duda, tu confianza es el motor que me impulsa a seguir adelante con alegría. No importa qué tan lejos estemos, mi corazón siempre te pertenece porque eres mi hogar y mi mayor orgullo.",
+            "Eres mi calma en medio del caos, la luz que guía mis pasos cuando el camino parece oscurecerse. Valoro cada detalle tuyo, desde los grandes gestos hasta los besos robados que guardo como el tesoro más preciado de mi alma.",
+            "Estar a tu lado es el regalo más constante que la vida me ha dado, y prometo cuidarlo con toda la lealtad y el cariño que mereces. Me haces inmensamente feliz con tu sola presencia y con la seguridad de que caminamos juntos.",
+            "Admiro profundamente tu fuerza interior y esa capacidad infinita que tienes para amar y comprender. Nuestra historia es mi libro preferido, uno que deseo escribir contigo eternamente, capítulo tras capítulo, lleno de apoyo mutuo.",
+            "Confío en ti con todo mi ser y me siento honrado de compartir mi vida con alguien tan especial como tú. Eres mi equipo, mi compañera de aventuras y el alma que complementa la mía de una forma que las palabras apenas alcanzan a describir."
         ];
         const longDates = [
-            "Cocinemos juntos una pasta italiana desde cero, desde la masa hasta la salsa, mientras ponemos música romántica de fondo y bailamos lento en la sala esperando a que la cena esté lista.",
-            "Preparemos un picnic nocturno en el suelo de la sala, con muchas mantas suaves, cojines cómodos y sandwiches gourmet para hablar de nuestros sueños más profundos bajo la luz de guirnaldas y velas."
+            "Cocinemos juntos una pasta italiana desde cero, desde la masa hasta la salsa, mientras ponemos música romántica de fondo y bailamos lento en la sala esperando a que la cena esté lista para disfrutarla con velas.",
+            "Preparemos un picnic nocturno en el suelo de la sala, con muchas mantas suaves, cojines cómodos y sandwiches gourmet para hablar de nuestros sueños más profundos bajo la luz de guirnaldas y el calor del hogar.",
+            "Noche de spa casero totalmente relajante, con música Zen, masajes con aceites aromáticos y mascarillas faciales para desconectar del estrés exterior y reconectar solo nosotros dos en una atmósfera de paz absoluta.",
+            "Maratón de nuestras películas favoritas de la infancia, preparando palomitas calientes con mucha mantequilla y quedándonos acurrucados bajo una manta térmica durante toda la noche de cine nostálgico y risas compartidas."
         ];
 
         document.getElementById('btn-save-diary').onclick = async function() {
             const dateVal = document.getElementById('diary-date').value, textVal = document.getElementById('diary-text').value.trim();
-            if (!dateVal || !textVal || !window.isAuthReady) return;
+            if (!dateVal || !textVal) return;
+            if(!window.isAuthReady) { toast("Espere un momento, conectando..."); return; }
             this.disabled = true; document.getElementById('diary-loader').classList.remove('hidden');
-            const res = await callGemini(textVal, "Actúa como un corrector romántico. Mejora ligeramente la fluidez del texto sin cambiar su significado ni añadir mucha información nueva. Máximo 60 palabras.");
-            try { await window.addDoc(window.diaryCollection, { content: res || textVal, date: window.Timestamp.fromDate(new Date(dateVal)), createdAt: window.Timestamp.now() }); document.getElementById('diary-text').value = ""; currentIndex = 0; toast("Recuerdo guardado ❤️"); } catch (e) {} finally { this.disabled = false; document.getElementById('diary-loader').classList.add('hidden'); }
+            const res = await callGemini(textVal, "Actúa como un corrector romántico discreto. Corrige ortografía y mejora levemente la fluidez sin cambiar el sentido original. Máximo 60 palabras.");
+            try { await window.addDoc(window.diaryCollection, { content: res || textVal, date: window.Timestamp.fromDate(new Date(dateVal)), createdAt: window.Timestamp.now() }); document.getElementById('diary-text').value = ""; currentIndex = 0; toast("Recuerdo guardado con éxito ❤️"); } catch (e) { toast("Error al guardar"); } finally { this.disabled = false; document.getElementById('diary-loader').classList.add('hidden'); }
         };
 
         document.getElementById('btn-ai-msg').onclick = async function() {
             this.disabled = true; this.innerHTML = '<span class="loader"></span>';
-            const res = await callGemini("Dedicación de amor larga", "Escribe un mensaje de amor, apoyo, respeto o lealtad muy variado y creativo de 60-80 palabras. Evita estructuras repetitivas.");
+            const res = await callGemini("Dedicación de amor profunda", "Escribe un mensaje de amor, apoyo, respeto o lealtad muy variado y creativo de 60-80 palabras. No empieces siempre igual.");
             lastGeneratedMsg = res || longDedications[Math.floor(Math.random() * longDedications.length)];
             const box = document.getElementById('ai-msg-box');
             box.innerText = lastGeneratedMsg; box.classList.remove('hidden');
@@ -599,7 +607,7 @@
 
         document.getElementById('btn-ai-date').onclick = async function() {
             this.disabled = true; this.innerHTML = '<span class="loader"></span>';
-            const res = await callGemini("Plan en casa detallado", "Sugiere un plan romántico muy detallado y creativo para hacer en casa hoy, de 60-80 palabras. Varía entre cocina, juegos o relax.");
+            const res = await callGemini("Plan romántico detallado", "Sugiere un plan romántico muy detallado y creativo para hacer en casa hoy, de 60-80 palabras. Sé original y variado.");
             const box = document.getElementById('ai-date-box');
             box.innerText = res || longDates[Math.floor(Math.random() * longDates.length)];
             box.classList.remove('hidden');
@@ -608,17 +616,19 @@
 
         document.getElementById('btn-fav-msg').onclick = async function() {
             if(!lastGeneratedMsg) return;
-            if(!window.isAuthReady) { toast("Conectando con base de datos..."); return; }
+            if(!window.isAuthReady) { toast("Conectando con la base de datos..."); return; }
             
-            const isFav = favorites.some(f => f.text === lastGeneratedMsg);
-            if (isFav) {
-                const docId = favorites.find(f => f.text === lastGeneratedMsg).id;
-                await window.deleteDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'favoritos', docId));
-                toast("Eliminado de favoritos");
-            } else {
-                await window.addDoc(window.favsCollection, { text: lastGeneratedMsg, source: 'ai', createdAt: window.Timestamp.now() });
-                toast("¡Guardado en favoritos! ❤️");
-            }
+            try {
+                const isFav = favorites.some(f => f.text === lastGeneratedMsg);
+                if (isFav) {
+                    const docId = favorites.find(f => f.text === lastGeneratedMsg).id;
+                    await window.deleteDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'favoritos', docId));
+                    toast("Eliminado de tus favoritos");
+                } else {
+                    await window.addDoc(window.favsCollection, { text: lastGeneratedMsg, source: 'ai', createdAt: window.Timestamp.now() });
+                    toast("¡Guardado en tus favoritos! ❤️");
+                }
+            } catch (e) { toast("Error al procesar favorito"); }
         };
 
         function updateFavButtonState() { document.getElementById('btn-fav-msg').innerText = favorites.some(f => f.text === lastGeneratedMsg) ? "❤️" : "⭐"; }
