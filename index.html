@@ -14,14 +14,14 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, Timestamp, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Inicialización Segura
+        // Inicialización Segura para el entorno
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'diario-amor-eri';
 
-        // Funciones Globales para los botones
+        // Variables globales para persistencia
         window.db = db;
         window.auth = auth;
         window.addDoc = addDoc;
@@ -30,23 +30,20 @@
         window.Timestamp = Timestamp;
         window.appId = appId;
         
-        // Estado de conexión
         window.isAuthReady = false;
         window.entries = [];
         window.favorites = [];
 
-        // Regla 1: Definición de colecciones globales (públicas)
-        const diaryPath = `/artifacts/${appId}/public/data/diario`;
-        const favsPath = `/artifacts/${appId}/public/data/favoritos`;
-
+        // Configuración de Listeners (Se activa solo después de Auth)
         const setupListeners = () => {
+            // Rutas públicas obligatorias según Regla 1
             const diaryCol = collection(db, 'artifacts', appId, 'public', 'data', 'diario');
             const favsCol = collection(db, 'artifacts', appId, 'public', 'data', 'favoritos');
             
             window.diaryCollection = diaryCol;
             window.favsCollection = favsCol;
 
-            // Escuchar Diario
+            // Escuchar Diario (Ordenando en memoria para evitar errores de índice en Firebase)
             onSnapshot(diaryCol, (snap) => {
                 window.entries = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => {
                     const dateA = a.date?.toMillis() || 0;
@@ -54,7 +51,7 @@
                     return dateB - dateA;
                 });
                 if (window.renderBook) window.renderBook();
-            }, (err) => console.error("Error sincronizando Diario:", err));
+            }, (err) => console.error("Error Firestore Diario:", err));
 
             // Escuchar Favoritos
             onSnapshot(favsCol, (snap) => {
@@ -65,26 +62,30 @@
                 });
                 if (window.renderCollage) window.renderCollage();
                 if (window.updateFavButtonState) window.updateFavButtonState();
-                if (window.renderBook) window.renderBook(); // Actualizar pies de página
-            }, (err) => console.error("Error sincronizando Favoritos:", err));
+                if (window.renderBook) window.renderBook();
+            }, (err) => console.error("Error Firestore Favoritos:", err));
         };
 
         const startConnection = async () => {
             try {
-                // Regla 3: Autenticar primero
+                // Autenticación obligatoria antes de cualquier operación
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
                 
-                window.isAuthReady = true;
-                setupListeners();
-                document.getElementById('msg-toast').style.opacity = "0";
-                console.log("Conexión global establecida con éxito");
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        window.isAuthReady = true;
+                        setupListeners();
+                        const toastEl = document.getElementById('msg-toast');
+                        if(toastEl) toastEl.style.opacity = "0";
+                    }
+                });
             } catch (e) {
-                console.error("Error conectando a Firebase:", e);
-                setTimeout(startConnection, 2000); // Reintento automático
+                console.error("Error de Conexión:", e);
+                setTimeout(startConnection, 2000);
             }
         };
 
@@ -203,7 +204,7 @@
         <source src="soundtrack.mp3" type="audio/mpeg">
     </audio>
 
-    <div id="msg-toast">Estableciendo conexión compartida...</div>
+    <div id="msg-toast">Conectando rincón compartido...</div>
     <div id="hearts-bg-container" class="fixed inset-0 pointer-events-none z-0 overflow-hidden"></div>
 
     <nav id="top-nav" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-white/80 backdrop-blur-md p-2 rounded-full shadow-xl border border-pink-100 flex items-center">
@@ -349,7 +350,8 @@
     </div>
 
     <script>
-        const API_KEY_MAIN = "AIzaSyDrwdtqd2vKXBrROIWQO49ZynmGTaYShD4";
+        // API Key vacía para usar la provista por el entorno
+        const apiKey = "";
         const audio = document.getElementById('romantic-music');
         let musicStarted = false;
         let lastGeneratedMsg = "";
@@ -359,15 +361,15 @@
 
         function toast(msg) {
             const el = document.getElementById('msg-toast');
+            if(!el) return;
             el.innerText = msg; el.style.opacity = "1";
             setTimeout(() => el.style.opacity = "0", 3500);
         }
 
         async function callGemini(prompt, systemInstruction) {
-            const salt = Math.random().toString(36).substring(7);
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY_MAIN}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             const payload = { 
-                contents: [{ parts: [{ text: `${prompt} (Semilla: ${salt})` }] }], 
+                contents: [{ parts: [{ text: prompt }] }], 
                 systemInstruction: { parts: [{ text: systemInstruction }] } 
             };
 
@@ -387,7 +389,8 @@
 
         function showSection(id) {
             document.querySelectorAll('[id^="section-"]').forEach(s => s.classList.add('hidden'));
-            document.getElementById(`section-${id}`).classList.remove('hidden');
+            const target = document.getElementById(`section-${id}`);
+            if (target) target.classList.remove('hidden');
             window.scrollTo(0,0);
             if(id === 'welcome' && !heartFormed) startHeartAnimation();
         }
@@ -405,7 +408,7 @@
             } catch (e) {}
         }
 
-        // --- CORAZÓN ---
+        // --- ANIMACIÓN CORAZÓN ---
         let heartFormed = false;
         function startHeartAnimation() {
             playMusic();
@@ -444,6 +447,7 @@
 
         function createBGHeart() {
             const container = document.getElementById('hearts-bg-container');
+            if(!container) return;
             const h = document.createElement('div'); h.innerHTML = '❤️'; h.className = 'floating-bg-heart';
             h.style.left = Math.random() * 100 + 'vw'; h.style.fontSize = (Math.random() * 20 + 10) + 'px';
             container.appendChild(h);
@@ -451,37 +455,43 @@
         }
         setInterval(createBGHeart, 900);
 
-        // --- FAVORITOS ---
+        // --- LÓGICA DE COLLAGE FAVORITOS ---
         window.renderCollage = () => {
             const slots = [0,1,2,3,4,5];
             const colors = ['note-yellow', 'note-pink', 'note-blue', 'note-green', 'note-purple', 'note-yellow'];
             slots.forEach((i, idx) => {
                 const slotDiv = document.getElementById(`slot-${i}`);
+                if(!slotDiv) return;
                 const oldNote = slotDiv.querySelector('.fav-sticker');
                 let favIndex = (window.favorites || []).length <= 6 ? i : (favRotationIndex + i) % (window.favorites || []).length;
                 const fav = (window.favorites || [])[favIndex];
+                
                 if (!fav) { if (oldNote) { oldNote.classList.add('leaving'); setTimeout(() => oldNote.remove(), 1200); } return; }
                 if (oldNote && oldNote.dataset.id === fav.id) return;
+                
                 const note = document.createElement('div');
                 note.dataset.id = fav.id; note.className = `fav-sticker ${colors[idx % colors.length]} entering`;
                 note.innerText = fav.source === 'ai' ? `"${fav.text}"` : `*${fav.text}*`;
                 note.style.transform = `rotate(${Math.random() * 8 - 4}deg)`;
+                
                 if (oldNote) { oldNote.classList.add('leaving'); setTimeout(() => oldNote.remove(), 1200); }
                 setTimeout(() => { slotDiv.appendChild(note); setTimeout(() => note.classList.add('active'), 100); }, idx * 300); 
             });
         }
         setInterval(() => { if (window.favorites && window.favorites.length > 6) { favRotationIndex = (favRotationIndex + 1) % window.favorites.length; window.renderCollage(); } }, 15000);
 
-        // --- DIARIO ---
+        // --- LÓGICA DEL DIARIO ---
         const DIARY_EMOJIS = ["🧸", "🌷", "✨", "🎀", "🐧", "🐱", "🐶", "🧁", "🌈", "🦋", "🌸", "🌹", "🍰", "🎈"];
         function updateDiaryStickers(hasLeft, hasRight) {
             ["L1", "L2", "L3", "L4"].forEach(id => {
                 const el = document.getElementById(`sticker-${id}`);
+                if (!el) return;
                 if (hasLeft) { el.innerText = DIARY_EMOJIS[Math.floor(Math.random() * DIARY_EMOJIS.length)]; el.classList.add('active'); el.style.transform = `scale(1) rotate(${Math.random() * 40 - 20}deg)`; }
                 else el.classList.remove('active');
             });
             ["R1", "R2", "R3", "R4"].forEach(id => {
                 const el = document.getElementById(`sticker-${id}`);
+                if(!el) return;
                 if (hasRight) { el.innerText = DIARY_EMOJIS[Math.floor(Math.random() * DIARY_EMOJIS.length)]; el.classList.add('active'); el.style.transform = `scale(1) rotate(${Math.random() * 40 - 20}deg)`; }
                 else el.classList.remove('active');
             });
@@ -489,32 +499,38 @@
 
         window.renderBook = () => {
             if (!window.entries || window.entries.length === 0) {
-                document.getElementById('page-body-right').innerText = "Aún no hay recuerdos. Escribe nuestro primer momento arriba ❤️";
+                const bodyR = document.getElementById('page-body-right');
+                if(bodyR) bodyR.innerText = "Aún no hay recuerdos. Escribe nuestro primer momento arriba ❤️";
                 return;
             }
             const current = window.entries[currentIndex];
             const prev = window.entries[currentIndex + 1];
             updateDiaryStickers(!!prev, !!current);
 
-            document.getElementById('page-date-right').innerText = current.date.toDate().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-            document.getElementById('page-body-right').innerText = current.content;
+            if(current) {
+                document.getElementById('page-date-right').innerText = current.date.toDate().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+                document.getElementById('page-body-right').innerText = current.content;
+            }
             
             const leftContent = document.getElementById('diary-page-left-content');
-            if(prev) {
+            if(prev && leftContent) {
                 document.getElementById('page-date-left').innerText = prev.date.toDate().toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
                 document.getElementById('page-body-left').innerText = prev.content;
                 leftContent.parentElement.style.opacity = "1";
-            } else leftContent.parentElement.style.opacity = "0";
+            } else if (leftContent) {
+                leftContent.parentElement.style.opacity = "0";
+            }
             
             const footerL = document.getElementById('footer-left'), footerR = document.getElementById('footer-right');
-            footerL.innerText = ""; footerR.innerText = "";
+            if(footerL) footerL.innerText = ""; 
+            if(footerR) footerR.innerText = "";
             
             if (window.favorites && window.favorites.length > 0) {
                 const f1 = window.favorites[Math.floor(Math.random() * window.favorites.length)].text;
-                footerR.innerText = `"${f1}" ${signatures[Math.floor(Math.random() * signatures.length)]}`;
-                if (window.favorites.length > 1) {
+                if(footerR) footerR.innerText = `"${f1.substring(0, 40)}..." ${signatures[Math.floor(Math.random() * signatures.length)]}`;
+                if (window.favorites.length > 1 && footerL) {
                     const f2 = window.favorites[Math.floor(Math.random() * window.favorites.length)].text;
-                    footerL.innerText = `"${f2}" ${signatures[Math.floor(Math.random() * signatures.length)]}`;
+                    footerL.innerText = `"${f2.substring(0, 40)}..." ${signatures[Math.floor(Math.random() * signatures.length)]}`;
                 }
             }
             document.getElementById('page-number').innerText = `${currentIndex + 1} / ${window.entries.length}`;
@@ -522,48 +538,58 @@
             document.getElementById('next-page').disabled = currentIndex === 0;
         };
 
-        // --- BACKUPS ---
-        const longDedications = [
-            "Desde que llegaste a mi vida, cada rincón de mi existencia ha cobrado un sentido mucho más profundo y brillante. Eres esa paz que siempre busqué en un mundo lleno de ruido, la brisa suave que refresca mi alma y el refugio incondicional donde siempre encuentro consuelo. Valoro tu lealtad infinita, tu ternura inagotable y esa forma tan hermosa en la que cuidas cada detalle de lo que hemos construido juntos con un respeto y una confianza que son inquebrantables.",
-            "Me encanta perderme en nuestras charlas que parecen no tener fin y en esos silencios compartidos donde nuestras miradas logran decir mucho más que mil palabras juntas. Eres mi equipo de vida, mi compañera de aventuras más valiente y el amor que siempre soñé tener a mi lado para compartir cada amanecer, cada reto y cada sueño que aún nos queda por cumplir. Gracias por ser mi soporte fundamental y por amarme con esa sinceridad que te hace única en el universo.",
-            "Tu sonrisa es el faro que guía mis días cuando las cosas se ponen difíciles afuera, dándome siempre la fuerza necesaria para seguir adelante con una esperanza renovada. Aprecio infinitamente tu paciencia, tu inteligencia que me cautiva y esa magia única que pones en cada detalle cotidiano para hacerme sentir el hombre más afortunado del planeta. Estar contigo es aprender la verdadera belleza de amar de forma pura, leal y con un respeto absoluto."
-        ];
-        const longDates = [
-            "Cocinemos juntos una cena gourmet de varios tiempos en nuestra cocina, buscando una receta compleja que nos desafíe a trabajar en equipo, mientras bailamos lento al ritmo de nuestra playlist favorita y disfrutamos del proceso con risas, muchas muestras de cariño y un buen vino antes de sentarnos a la luz de las velas compartiendo un momento de paz total.",
-            "Preparemos un picnic de lujo en el suelo de nuestra propia sala, usando las mantas más suaves y todos los cojines cómodos que tengamos para hablar de nuestros sueños más profundos bajo la luz tenue de velas aromáticas, compartiendo una degustación de nuestras frutas, postres y quesos preferidos mientras el mundo afuera se detiene por completo."
-        ];
-
-        // --- SOBRE ---
+        // --- LÓGICA SOBRE Y CARTA ---
         const envelope = document.getElementById('envelope-wrapper'), letter = document.getElementById('target-letter'), flap = document.getElementById('envelope-flap'), helperText = document.getElementById('helper-text-envelope');
         let envStep = 0;
         function resetValentine() {
-            envStep = 0; flap.classList.remove('flap-open'); letter.classList.remove('letter-pull'); letter.style.opacity = '0'; letter.style.pointerEvents = 'none';
-            helperText.innerText = "Toca el sobre para abrirlo"; document.getElementById('content-asking').classList.remove('hidden'); document.getElementById('content-success').classList.add('hidden');
-            const btnYes = document.getElementById('btn-yes'), btnNo = document.getElementById('btn-no'); noCount = 0;
-            btnYes.style.transform = "scale(1)"; btnYes.classList.remove('centered-yes'); btnNo.style.position = 'static'; btnYes.innerText = "Sí"; btnNo.innerText = "No";
+            envStep = 0; 
+            if(flap) flap.classList.remove('flap-open'); 
+            if(letter) {
+                letter.classList.remove('letter-pull'); letter.style.opacity = '0'; letter.style.pointerEvents = 'none';
+            }
+            if(helperText) helperText.innerText = "Toca el sobre para abrirlo"; 
+            document.getElementById('content-asking').classList.remove('hidden'); 
+            document.getElementById('content-success').classList.add('hidden');
+            noCount = 0;
+            const btnYes = document.getElementById('btn-yes');
+            const btnNo = document.getElementById('btn-no');
+            if(btnYes) { btnYes.style.transform = "scale(1)"; btnYes.classList.remove('centered-yes'); btnYes.innerText = "Sí"; }
+            if(btnNo) { btnNo.style.position = 'static'; btnNo.innerText = "No"; }
         }
-        envelope.onclick = () => { if (envStep === 0) { flap.classList.add('flap-open'); envStep = 1; setTimeout(() => { letter.style.opacity = '1'; letter.style.pointerEvents = 'auto'; helperText.innerText = "Toca la carta para sacarla"; }, 600); } };
-        letter.onclick = (e) => { e.stopPropagation(); if (envStep === 1) { letter.classList.add('letter-pull'); envStep = 2; setTimeout(() => showSection('question'), 1100); } };
+
+        if(envelope) envelope.onclick = () => { if (envStep === 0) { flap.classList.add('flap-open'); envStep = 1; setTimeout(() => { letter.style.opacity = '1'; letter.style.pointerEvents = 'auto'; helperText.innerText = "Toca la carta para sacarla"; }, 600); } };
+        if(letter) letter.onclick = (e) => { e.stopPropagation(); if (envStep === 1) { letter.classList.add('letter-pull'); envStep = 2; setTimeout(() => showSection('question'), 1100); } };
 
         const btnNo = document.getElementById('btn-no'), btnYes = document.getElementById('btn-yes');
         let noCount = 0;
-        btnNo.onmouseover = () => { if(noCount >= 3) { btnNo.style.position = 'absolute'; btnNo.style.left = Math.random() * 75 + '%'; btnNo.style.top = Math.random() * 75 + '%'; } };
-        btnNo.onclick = () => {
-            noCount++;
-            const yesMsgs = ["sí, porfavor", "sí, si quiero", "sí, acepto", "sí, obvio", "sí, te amo", "sí, mil veces", "sí, claro", "sí, ya dale", "sí, por siempre", "sí, soy tuya"], noMsgs = ["no, no quiero", "no, te odio", "no, me caes mal", "no, ni lo sueñes"];
-            btnYes.innerText = yesMsgs[noCount % yesMsgs.length]; btnNo.innerText = noMsgs[noCount % noMsgs.length] || "No";
-            const scale = Math.min(1 + noCount * 0.25, 2.5); btnYes.style.transform = btnYes.classList.contains('centered-yes') ? `translate(-50%, -50%) scale(${scale})` : `scale(${scale})`;
-            if(noCount > 5) btnYes.classList.add('centered-yes');
-            if(noCount >= 10) showSuccessUI("¡Ya eres mía!", "Te voy a obligar porque te amo demasiado para aceptar un no. 😍");
-        };
-        btnYes.onclick = () => { if (noCount === 0) showSuccessUI("¡Siiii!", "Sabía que aceptarías a la primera. ¡Me haces el más feliz! ❤️"); else showSuccessUI("¡Al fin!", "Te costó un poquito pero ya eres mi San Valentín oficial. ¡Te amo! ❤️"); };
-        function showSuccessUI(title, msg) { document.getElementById('content-asking').classList.add('hidden'); document.getElementById('content-success').classList.remove('hidden'); document.getElementById('success-title').innerText = title; document.getElementById('success-message').innerText = msg; confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } }); }
+        if(btnNo) {
+            btnNo.onmouseover = () => { if(noCount >= 3) { btnNo.style.position = 'absolute'; btnNo.style.left = Math.random() * 75 + '%'; btnNo.style.top = Math.random() * 75 + '%'; } };
+            btnNo.onclick = () => {
+                noCount++;
+                const yesMsgs = ["sí, porfavor", "sí, si quiero", "sí, acepto", "sí, obvio", "sí, te amo", "sí, mil veces", "sí, claro", "sí, ya dale", "sí, por siempre", "sí, soy tuya"], noMsgs = ["no, no quiero", "no, te odio", "no, me caes mal", "no, ni lo sueñes"];
+                btnYes.innerText = yesMsgs[noCount % yesMsgs.length]; btnNo.innerText = noMsgs[noCount % noMsgs.length] || "No";
+                const scale = Math.min(1 + noCount * 0.25, 2.5); 
+                btnYes.style.transform = btnYes.classList.contains('centered-yes') ? `translate(-50%, -50%) scale(${scale})` : `scale(${scale})`;
+                if(noCount > 5) btnYes.classList.add('centered-yes');
+                if(noCount >= 10) showSuccessUI("¡Ya eres mía!", "Te voy a obligar porque te amo demasiado para aceptar un no. 😍");
+            };
+        }
+        if(btnYes) btnYes.onclick = () => { if (noCount === 0) showSuccessUI("¡Siiii!", "Sabía que aceptarías a la primera. ¡Me haces el más feliz! ❤️"); else showSuccessUI("¡Al fin!", "Te costó un poquito pero ya eres mi San Valentín oficial. ¡Te amo! ❤️"); };
 
-        // --- ACCIONES ---
+        function showSuccessUI(title, msg) { 
+            document.getElementById('content-asking').classList.add('hidden'); 
+            document.getElementById('content-success').classList.remove('hidden'); 
+            document.getElementById('success-title').innerText = title; 
+            document.getElementById('success-message').innerText = msg; 
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } }); 
+        }
+
+        // --- ACCIONES FORMULARIO DIARIO ---
         document.getElementById('btn-save-diary').onclick = async function() {
             const dateVal = document.getElementById('diary-date').value, textVal = document.getElementById('diary-text').value.trim();
             if (!dateVal || !textVal) return;
-            if(!window.isAuthReady) { toast("Aún conectando... por favor espere"); return; }
+            if(!window.isAuthReady) { toast("Conectando base de datos..."); return; }
+            
             this.disabled = true; document.getElementById('diary-loader').classList.remove('hidden');
             const res = await callGemini(textVal, "Actúa como un corrector romántico. Mejora ligeramente la fluidez sin cambiar el sentido original ni añadir demasiada información nueva. Máximo 100 palabras.");
             try { 
@@ -575,7 +601,7 @@
         document.getElementById('btn-ai-msg').onclick = async function() {
             this.disabled = true; this.innerHTML = '<span class="loader"></span>';
             const res = await callGemini("Dedicación de amor profunda y variada", "Escribe un mensaje de amor, apoyo, respeto o lealtad muy creativo de 80-100 palabras. No empieces siempre con 'Eres'.");
-            lastGeneratedMsg = res || longDedications[Math.floor(Math.random() * longDedications.length)];
+            lastGeneratedMsg = res || "Te amo de una forma inexplicable.";
             document.getElementById('ai-msg-box').innerText = lastGeneratedMsg; document.getElementById('ai-msg-box').classList.remove('hidden');
             document.getElementById('btn-fav-msg').classList.remove('hidden');
             window.updateFavButtonState();
@@ -585,7 +611,7 @@
         document.getElementById('btn-ai-date').onclick = async function() {
             this.disabled = true; this.innerHTML = '<span class="loader"></span>';
             const res = await callGemini("Plan romántico detallado en casa", "Sugiere un plan romántico muy original de 80-100 palabras para hacer en casa. Varía entre juegos, cocina o relax.");
-            document.getElementById('ai-date-box').innerText = res || longDates[Math.floor(Math.random() * longDates.length)];
+            document.getElementById('ai-date-box').innerText = res || "Hagamos un fuerte de almohadas.";
             document.getElementById('ai-date-box').classList.remove('hidden');
             this.disabled = false; this.innerHTML = 'Sugerir ✨';
         };
@@ -615,10 +641,6 @@
         document.getElementById('prev-page').onclick = () => { if(currentIndex < (window.entries || []).length - 1) { currentIndex++; window.renderBook(); } };
         document.getElementById('next-page').onclick = () => { if(currentIndex > 0) { currentIndex--; window.renderBook(); } };
         
-        window.addEventListener('db-ready', () => {
-            toast("¡Base de datos conectada! ❤️");
-        });
-
         window.onload = () => showSection('welcome');
     </script>
 </body>
